@@ -16,7 +16,22 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-    <RootNamespace>Apache.Shenyu.Client</RootNamespace>
+    <Version>2.5.0</Version>
+    <FileVersion>$(Version)</FileVersion>
+    <Authors>ApacheShenyu</Authors>
+    <Company>Apache Software Foundation</Company>
+    <Copyright>$(Company)</Copyright>
+    <Title>Apache.ShenYu.Client</Title>
+    <PackageTags>Apache;Shenyu</PackageTags>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReleaseNotes>Please refer to CHANGELOG.md for details</PackageReleaseNotes>
+    <Description>.NET client library for Apache ShenYu</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- add more documents for future -->
+    <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

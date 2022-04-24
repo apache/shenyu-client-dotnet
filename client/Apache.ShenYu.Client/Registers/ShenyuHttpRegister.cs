@@ -61,12 +61,12 @@ namespace Apache.ShenYu.Client.Registers
 
         public async Task PersistInterface(MetaDataRegisterDTO metadata)
         {
-            await this.DoRegister(metadata, Constants.MetaPath);
+            await this.DoRegister(metadata, Constants.MetaPath, RegisterTypeEnums.MetaData);
         }
 
         public async Task PersistURI(URIRegisterDTO registerDTO)
         {
-            await this.DoRegister(registerDTO, Constants.URIPath);
+            await this.DoRegister(registerDTO, Constants.URIPath, RegisterTypeEnums.Uri);
             this._uriRegisterDto = registerDTO;
         }
 
@@ -89,12 +89,13 @@ namespace Apache.ShenYu.Client.Registers
             }
 
             await Task.WhenAll(tasks);
-            Console.WriteLine("finished access token.");
+            _logger.LogInformation("request access token successfully!");
         }
 
         private async Task SetAccessToken(string server)
         {
-            var builder = new UriBuilder(server) { Path = Constants.LoginPath, Query = $"userName={this.UserName}&password={this.Password}" };
+            var builder = new UriBuilder(server)
+                { Path = Constants.LoginPath, Query = $"userName={this.UserName}&password={this.Password}" };
             var resp = await this._client.GetStringAsync(builder.ToString());
             var jObject = JObject.Parse(resp);
             var token = jObject["data"]?["token"].ToString();
@@ -102,7 +103,7 @@ namespace Apache.ShenYu.Client.Registers
             this.AccessTokens.Add(server, token);
         }
 
-        private async Task DoRegister<T>(T t, string path)
+        private async Task DoRegister<T>(T t, string path, RegisterTypeEnums type)
         {
             foreach (var server in this.ServerList)
             {
@@ -118,18 +119,19 @@ namespace Apache.ShenYu.Client.Registers
 
                 var requestMessage = new HttpRequestMessage(HttpMethod.Post, new Uri($"{server}{path}"));
                 requestMessage.Headers.Add(Constants.XAccessToken, accessToken);
+                var content = JsonConvert.SerializeObject(t);
                 requestMessage.Content = new StringContent(
-                    JsonConvert.SerializeObject(t),
+                    content,
                     Encoding.UTF8, "application/json");
 
                 var resp = await this._client.SendAsync(requestMessage);
                 if (resp.IsSuccessStatusCode)
                 {
-                    this._logger.LogInformation("success");
+                    this._logger.LogInformation("succeeded to register type: {}, content: {}", type, content);
                 }
                 else
                 {
-                    this._logger.LogInformation("failed");
+                    this._logger.LogWarning("failed to register type: {}, content: {}", type, content);
                 }
             }
         }

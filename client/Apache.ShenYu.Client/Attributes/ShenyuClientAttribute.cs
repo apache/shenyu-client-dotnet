@@ -17,7 +17,7 @@
 
 using System;
 
-namespace Apache.ShenYu.Client.Attibutes
+namespace Apache.ShenYu.Client.Attributes
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class ShenyuClientAttribute : Attribute
