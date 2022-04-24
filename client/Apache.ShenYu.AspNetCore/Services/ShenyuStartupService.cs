@@ -22,7 +22,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Apache.ShenYu.Client.Attibutes;
+using Apache.ShenYu.Client.Attributes;
 using Apache.ShenYu.Client.Models.DTO;
 using Apache.ShenYu.Client.Options;
 using Apache.ShenYu.Client.Registers;
