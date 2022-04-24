@@ -18,7 +18,6 @@
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <Version>2.5.0</Version>
     <FileVersion>$(Version)</FileVersion>
-    <Authors>ApacheShenyu</Authors>
     <Company>Apache Software Foundation</Company>
     <Copyright>$(Company)</Copyright>
     <Title>Apache.ShenYu.Client</Title>
