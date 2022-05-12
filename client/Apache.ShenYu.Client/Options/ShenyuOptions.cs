@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+using System.Collections.Generic;
+
 namespace Apache.ShenYu.Client.Options
 {
     public class ShenyuOptions
@@ -26,10 +28,15 @@ namespace Apache.ShenYu.Client.Options
 
         public class RegisterOptions
         {
+            /// <summary>
+            /// register types, including http, zookeeper.
+            /// </summary>
             public string RegisterType { get; set; } = "http";
             public string ServerList { get; set; }
-            public string UserName { get; set; }
-            public string Password { get; set; }
+            
+            public Dictionary<string, string> Props { get; set; }
+            
+            
         }
 
         public class ClientOptions

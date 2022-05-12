@@ -44,6 +44,6 @@ namespace Apache.ShenYu.Client.Registers
         /// <summary>
         /// Close.
         /// </summary>
-        void Close();
+        Task Close();
     }
 }

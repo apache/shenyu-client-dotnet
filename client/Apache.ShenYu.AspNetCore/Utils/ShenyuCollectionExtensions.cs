@@ -19,6 +19,7 @@ using System;
 using Apache.ShenYu.AspNetCore.Services;
 using Apache.ShenYu.Client.Options;
 using Apache.ShenYu.Client.Registers;
+using Apache.ShenYu.Client.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -40,9 +41,32 @@ namespace Apache.ShenYu.AspNetCore.Utils
                 throw new ArgumentNullException(nameof(services));
             }
 
+            var shenyuOptions = new ShenyuOptions();
+            configuration.GetSection(ShenyuOptions.Shenyu).Bind(shenyuOptions);
+
             services.Configure<ShenyuOptions>(configuration.GetSection(ShenyuOptions.Shenyu));
             services.AddHostedService<ShenyuStartupService>();
-            services.AddSingleton<IShenyuRegister, ShenyuHttpRegister>();
+
+            if (shenyuOptions.Register.RegisterType.Equals(""))
+            {
+                services.AddSingleton<IShenyuRegister, ShenyuHttpRegister>();
+            }
+
+            switch (shenyuOptions.Register.RegisterType)
+            {
+                case Constants.RegisterType.Http:
+                {
+                    services.AddSingleton<IShenyuRegister, ShenyuHttpRegister>();
+                    break;
+                }
+                case Constants.RegisterType.Zookeeper:
+                {
+                    services.AddSingleton<IShenyuRegister, ShenyuZookeeperRegister>();
+                    break;
+                }
+                default:
+                    throw new Exception($"not supported type {shenyuOptions.Register.RegisterType}");
+            }
         }
     }
 }
