@@ -19,7 +19,7 @@ namespace Apache.ShenYu.Client.Utils
 {
     public enum RegisterTypeEnums
     {
-        MetaData,
-        Uri
+        Http,
+        Zookeeper,
     }
 }

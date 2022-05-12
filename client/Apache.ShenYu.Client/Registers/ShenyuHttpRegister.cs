@@ -32,9 +32,7 @@ namespace Apache.ShenYu.Client.Registers
 {
     public class ShenyuHttpRegister : IShenyuRegister
     {
-        public string UserName { get; set; }
-        public string Password { get; set; }
-        public List<string> ServerList { get; set; }
+        private List<string> ServerList { get; set; }
 
         private Dictionary<string, string> AccessTokens { get; set; }
 
@@ -42,6 +40,8 @@ namespace Apache.ShenYu.Client.Registers
         private URIRegisterDTO _uriRegisterDto;
         private ShenyuOptions _shenyuOptions;
         private readonly ILogger<ShenyuHttpRegister> _logger;
+        private string _userName;
+        private string _password;
 
         public ShenyuHttpRegister(ILogger<ShenyuHttpRegister> logger)
         {
@@ -51,8 +51,8 @@ namespace Apache.ShenYu.Client.Registers
         public async Task Init(ShenyuOptions shenyuOptions)
         {
             this._shenyuOptions = shenyuOptions;
-            this.UserName = this._shenyuOptions.Register.UserName;
-            this.Password = this._shenyuOptions.Register.Password;
+            this._shenyuOptions.Register.Props.TryGetValue(Constants.RegisterConstants.UserName, out this._userName);
+            this._shenyuOptions.Register.Props.TryGetValue(Constants.RegisterConstants.Password, out this._password);
             this.ServerList = this._shenyuOptions.Register.ServerList?.Split(',').ToList();
             this.AccessTokens = new Dictionary<string, string>();
             this._client = new HttpClient();
@@ -61,16 +61,16 @@ namespace Apache.ShenYu.Client.Registers
 
         public async Task PersistInterface(MetaDataRegisterDTO metadata)
         {
-            await this.DoRegister(metadata, Constants.MetaPath, RegisterTypeEnums.MetaData);
+            await this.DoRegister(metadata, Constants.MetaPath, Constants.MetaType);
         }
 
         public async Task PersistURI(URIRegisterDTO registerDTO)
         {
-            await this.DoRegister(registerDTO, Constants.URIPath, RegisterTypeEnums.Uri);
+            await this.DoRegister(registerDTO, Constants.UriPath, Constants.UriType);
             this._uriRegisterDto = registerDTO;
         }
 
-        public void Close()
+        public Task Close()
         {
             throw new NotImplementedException();
         }
@@ -95,7 +95,10 @@ namespace Apache.ShenYu.Client.Registers
         private async Task SetAccessToken(string server)
         {
             var builder = new UriBuilder(server)
-                { Path = Constants.LoginPath, Query = $"userName={this.UserName}&password={this.Password}" };
+            {
+                Path = Constants.LoginPath,
+                Query = $"userName={this._userName}&password={this._password}"
+            };
             var resp = await this._client.GetStringAsync(builder.ToString());
             var jObject = JObject.Parse(resp);
             var token = jObject["data"]?["token"].ToString();
@@ -103,7 +106,7 @@ namespace Apache.ShenYu.Client.Registers
             this.AccessTokens.Add(server, token);
         }
 
-        private async Task DoRegister<T>(T t, string path, RegisterTypeEnums type)
+        private async Task DoRegister<T>(T t, string path, string type)
         {
             foreach (var server in this.ServerList)
             {
@@ -131,7 +134,7 @@ namespace Apache.ShenYu.Client.Registers
                 }
                 else
                 {
-                    this._logger.LogWarning("failed to register type: {}, content: {}", type, content);
+                    this._logger.LogWarning("failed to register type: {}, content: {}", type, content, resp);
                 }
             }
         }
