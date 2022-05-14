@@ -26,6 +26,8 @@
     <PackageReleaseNotes>Please refer to CHANGELOG.md for details</PackageReleaseNotes>
     <Description>.NET client library for Apache ShenYu</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RepositoryUrl>https://github.com/apache/incubator-shenyu-client-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
