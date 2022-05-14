@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,10 +27,9 @@ using Apache.ShenYu.Client.Attributes;
 using Apache.ShenYu.Client.Models.DTO;
 using Apache.ShenYu.Client.Options;
 using Apache.ShenYu.Client.Registers;
+using Apache.ShenYu.Client.Utils;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -73,11 +73,13 @@ namespace Apache.ShenYu.AspNetCore.Services
                 await this._shenyuRegister.Init(this._shenyuOptions.Value);
 
                 var addresses = this.GetAddresses();
+                var ipAddresses = GetIpAddresses(addresses);
+                
                 var rpcTypes = this._shenyuOptions.Value.Client.ClientType
                     .Split(',')
                     .Select(type => type.Trim())
                     .ToList();
-                foreach (var address in addresses)
+                foreach (var address in ipAddresses)
                 {
                     var uri = new Uri(address);
                     if (!rpcTypes.Contains(uri.Scheme))
@@ -141,6 +143,20 @@ namespace Apache.ShenYu.AspNetCore.Services
             });
 
             return Task.CompletedTask;
+        }
+
+        private ICollection<string> GetIpAddresses(ICollection<string> addresses)
+        {
+            var ipAddresses = new HashSet<string>();
+            var ip = IpUtils.GetLocalIPv4(NetworkInterfaceType.Ethernet);
+            foreach (var address in addresses)
+            {
+                var uriBuilder = new UriBuilder(address);
+                uriBuilder.Host = ip;
+                var ipAddr = uriBuilder.Uri.ToString();
+                ipAddresses.Add(ipAddr);
+            }
+            return ipAddresses;
         }
 
         private ICollection<string> GetAddresses()
