@@ -1,0 +1,76 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - ci
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        dotnet: [6.0.201]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - java: 5.0.406
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Support longpaths
+        if: ${{ matrix.os == 'windows-latest'}}
+        run: git config --system core.longpaths true
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Set Skip Env Var
+        uses: ./.github/actions/skip-ci
+      - name: Cache Maven Repos
+        if: env.SKIP_CI != 'true'
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+        # if: env.SKIP_CI != 'true'
+        # with:
+        # java-version: ${{ matrix.java }}
+      # - uses: actions/setup-java@v1
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v2.1.0
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+      - name: Build with dotnet
+        if: env.SKIP_CI != 'true'
+        run: dotnet build --configuration Release
+      # - uses: codecov/codecov-action@v1
+      # if: env.SKIP_CI != 'true'
+
+  check-license-header:
+    name: Check License Header
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Check License Header
+        uses: apache/skywalking-eyes@9bd5feb86b5817aa6072b008f9866a2c3bbc8587
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
