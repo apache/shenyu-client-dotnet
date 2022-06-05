@@ -26,6 +26,14 @@ header:
     - "**/obj/**"
     - "**/.github/**"
     - "**/*.md"
+    - "**/.gitignore"
     - "**/*.MD"
+    - "**/*.json"
+    - "**/.gitignore"
+    - "**/*.sln"
+    - "**/*.csproj"
+    - "DISCLAIMER"
+    - "LICENSE"
+    - "NOTICE"
 
   comment: on-failure
