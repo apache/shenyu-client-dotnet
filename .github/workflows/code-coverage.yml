@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: ci
+name: code-coverage
 
 on:
   pull_request:
@@ -23,18 +23,8 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        dotnet: [6.0.201]
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - dotnet: 5.0.406
-            os: ubuntu-latest
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Support longpaths
-        if: ${{ matrix.os == 'windows-latest'}}
-        run: git config --system core.longpaths true
       - uses: actions/checkout@v2
         with:
           submodules: true
@@ -43,20 +33,9 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v2.1.0
         with:
-          dotnet-version: ${{ matrix.dotnet }}
-      - name: Build with dotnet
+          dotnet-version: 5.0.406
+      - name: Unit Test with dotnet
         if: env.SKIP_CI != 'true'
-        run: dotnet build --configuration Release
-
-  check-license-header:
-    name: Check License Header
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Check License Header
-        uses: apache/skywalking-eyes@9bd5feb86b5817aa6072b008f9866a2c3bbc8587
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet test --configuration Release
+      # - uses: codecov/codecov-action@v1
+      # if: env.SKIP_CI != 'true'

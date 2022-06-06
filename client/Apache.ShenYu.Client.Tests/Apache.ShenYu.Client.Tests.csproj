@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5</TargetFrameworks>
+    <TargetFramework>net5</TargetFramework>
     <Version>2.5.0</Version>
     <FileVersion>$(Version)</FileVersion>
     <Company>Apache Software Foundation</Company>
