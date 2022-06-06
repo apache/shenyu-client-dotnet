@@ -40,18 +40,6 @@ jobs:
           submodules: true
       - name: Set Skip Env Var
         uses: ./.github/actions/skip-ci
-      # - name: Cache Maven Repos
-      #   if: env.SKIP_CI != 'true'
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: ~/.m2/repository
-      #     key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-maven-
-      # if: env.SKIP_CI != 'true'
-      # with:
-      # java-version: ${{ matrix.java }}
-      # - uses: actions/setup-java@v1
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v2.1.0
         with:
@@ -59,6 +47,9 @@ jobs:
       - name: Build with dotnet
         if: env.SKIP_CI != 'true'
         run: dotnet build --configuration Release
+      - name: Unit Test with dotnet
+        if: env.SKIP_CI != 'true'
+        run: dotnet test --configuration Release
       # - uses: codecov/codecov-action@v1
       # if: env.SKIP_CI != 'true'
 

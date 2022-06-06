@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
@@ -22,23 +24,27 @@ namespace Apache.ShenYu.Client.Utils
 {
     public static class IpUtils
     {
+        private const string LocalHostIp = "127.0.0.1";
         public static string GetLocalIPv4(NetworkInterfaceType type)
         {
-            string output = "";
+            List<string> ipv4Addresses = new List<string>();
             foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
             {
-                if (item.NetworkInterfaceType == type && item.OperationalStatus == OperationalStatus.Up)
+                if (item.OperationalStatus != OperationalStatus.Up)
                 {
-                    foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses)
+                    continue;
+                }
+
+                foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses)
+                {
+                    if (ip.Address.AddressFamily == AddressFamily.InterNetwork && !ip.Address.ToString().Equals(LocalHostIp))
                     {
-                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
-                        {
-                            return ip.Address.ToString();
-                        }
+                        ipv4Addresses.Add(ip.Address.ToString());
                     }
                 }
             }
-            return output;
+            ipv4Addresses.Sort();
+            return ipv4Addresses.Last();
         }
     }
 }
