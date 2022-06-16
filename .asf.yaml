@@ -16,7 +16,7 @@
 #
 
 github:
-  description: ShenYu Client SDK fo donet.
+  description: Apache ShenYu Client SDK fo donet.
   homepage: https://shenyu.apache.org/
   labels:
     - shenyu
