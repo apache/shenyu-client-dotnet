@@ -29,16 +29,12 @@ jobs:
         with:
           submodules: true
 
-      - name: Set Skip Env Var
-        uses: ./.github/actions/skip-ci
-
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v2.1.0
         with:
           dotnet-version: 5.0.406
 
       - name: Unit Test with dotnet
-        if: env.SKIP_CI != 'true'
         run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release
 
       - name: Install report tool
@@ -46,7 +42,6 @@ jobs:
 
       - name: Merging test results
         run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura
-
       - uses: codecov/codecov-action@v3.1.0
         with:
           file: TestResults/Cobertura.xml
