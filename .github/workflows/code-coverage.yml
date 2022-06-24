@@ -36,7 +36,7 @@ jobs:
           dotnet-version: 5.0.406
       - name: Unit Test with dotnet
         if: env.SKIP_CI != 'true'
-        run: dotnet test --configuration Release
+        run: dotnet test --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
       - name: Codecov
         if: env.SKIP_CI != 'true'
         uses: codecov/codecov-action@v3
