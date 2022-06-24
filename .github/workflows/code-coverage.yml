@@ -37,5 +37,6 @@ jobs:
       - name: Unit Test with dotnet
         if: env.SKIP_CI != 'true'
         run: dotnet test --configuration Release
-      # - uses: codecov/codecov-action@v1
-      # if: env.SKIP_CI != 'true'
+      - name: Codecov
+        if: env.SKIP_CI != 'true'
+        uses: codecov/codecov-action@v1
