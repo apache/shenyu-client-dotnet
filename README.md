@@ -1,5 +1,8 @@
 # Shenyu .NET client
 
+[![build](https://github.com/apache/incubator-shenyu-client-dotnet/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/apache/incubator-shenyu-client-dotnet/actions)
+[![codecov.io](https://codecov.io/gh/apache/incubator-shenyu-client-dotnet/coverage.svg?branch=main)](https://app.codecov.io/gh/apache/incubator-shenyu-client-dotnet?branch=main)
+
 ## Getting Started
 
 ### ASP.NET Core project
@@ -51,11 +54,11 @@ public void ConfigureServices(IServiceCollection services)
 When running on your local machine, ASP.NET Core service can only be called from `localhost`. To enable calling by IP, you can replace `https://localhost:{port};http://localhost:{port}` with `https://*:{port};http://*:{port}` by one of the following ways.
 
 - Setting in `launchSettings.json`. Replace for `applicationUrl` field.
-- Setting by environment variables `ASPNETCORE_URLS`. e.g. `ASPNETCORE_URLS "http://*:5000"` 
+- Setting by environment variables `ASPNETCORE_URLS`. e.g. `ASPNETCORE_URLS "http://*:5000"`
 - Adding `--urls` when start. e.g. `dotnet run --urls "https://*:5001;http://*:5000"`
-- Setting progratically by `UseUrls()` in `Program.cs`. 
+- Setting progratically by `UseUrls()` in `Program.cs`.
 
-e.g. 
+e.g.
 
 ```csharp
 public static IHostBuilder CreateHostBuilder(string[] args) =>
