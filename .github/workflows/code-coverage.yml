@@ -34,13 +34,25 @@ jobs:
         uses: actions/setup-dotnet@v2.1.0
         with:
           dotnet-version: 5.0.406
-      - name: Restore dependencies
-        run: dotnet restore
-      - name: Build
-        run: dotnet build --no-restore /p:ContinuousIntegrationBuild=true
+
+      # - name: Restore dependencies
+      #   run: dotnet restore
+
+      # - name: Build
+      #   run: dotnet build --no-restore /p:ContinuousIntegrationBuild=true
+
+      # - name: Unit Test with dotnet
+      #   if: env.SKIP_CI != 'true'
+      #   run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+
       - name: Unit Test with dotnet
-        if: env.SKIP_CI != 'true'
-        run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+        run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release
+
+      - name: Install report tool
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Merging test results
+        run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura
+
       - name: Codecov
-        if: env.SKIP_CI != 'true'
         uses: codecov/codecov-action@v3
