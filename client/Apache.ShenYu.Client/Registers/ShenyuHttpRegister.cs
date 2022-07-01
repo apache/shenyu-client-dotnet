@@ -77,41 +77,35 @@ namespace Apache.ShenYu.Client.Registers
 
         /// <summary>
         /// Get access token
-        ///
         /// </summary>
         /// <returns></returns>
         private async Task SetAccessTokens()
         {
-            List<Task> tasks = new List<Task>();
-            foreach (var server in this.ServerList)
-            {
-                tasks.Add(this.SetAccessToken(server));
-            }
+            List<Task> tasks = this.ServerList.Select(this.SetAccessToken).ToList();
 
             await Task.WhenAll(tasks);
-            _logger.LogInformation("request access token successfully!");
+            this._logger.LogInformation("request access token successfully!");
         }
 
         private async Task SetAccessToken(string server)
         {
             var builder = new UriBuilder(server)
             {
-                Path = Constants.LoginPath,
-                Query = $"userName={this._userName}&password={this._password}"
+                Path = Constants.LoginPath, Query = $"userName={this._userName}&password={this._password}"
             };
             var resp = await this._client.GetStringAsync(builder.ToString());
             var jObject = JObject.Parse(resp);
-            var token = jObject["data"]?["token"].ToString();
+            var token = jObject.SelectToken("$.data.token")?.ToString();
 
             this.AccessTokens.Add(server, token);
         }
 
         private async Task DoRegister<T>(T t, string path, string type)
         {
+            var content = JsonConvert.SerializeObject(t);
             foreach (var server in this.ServerList)
             {
-                string accessToken;
-                if (!this.AccessTokens.TryGetValue(server, out accessToken))
+                if (!this.AccessTokens.TryGetValue(server, out var accessToken))
                 {
                     await this.SetAccessToken(server);
                     if (!this.AccessTokens.TryGetValue(server, out accessToken))
@@ -122,7 +116,7 @@ namespace Apache.ShenYu.Client.Registers
 
                 var requestMessage = new HttpRequestMessage(HttpMethod.Post, new Uri($"{server}{path}"));
                 requestMessage.Headers.Add(Constants.XAccessToken, accessToken);
-                var content = JsonConvert.SerializeObject(t);
+
                 requestMessage.Content = new StringContent(
                     content,
                     Encoding.UTF8, "application/json");
@@ -134,7 +128,14 @@ namespace Apache.ShenYu.Client.Registers
                 }
                 else
                 {
-                    this._logger.LogWarning("failed to register type: {}, content: {}", type, content, resp);
+                    var respContent = string.Empty;
+                    if (resp.Content != null)
+                    {
+                        respContent = await resp.Content.ReadAsStringAsync();
+                    }
+
+                    this._logger.LogWarning("failed to register type: {}, content: {}, response: {}", type, content,
+                        respContent);
                 }
             }
         }
