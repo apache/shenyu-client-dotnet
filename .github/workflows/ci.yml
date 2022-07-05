@@ -22,14 +22,16 @@ on:
       - main
 
 jobs:
-  build:
+  build_net6:
     strategy:
       matrix:
         dotnet: [6.0.201]
         os: [ubuntu-latest, macos-latest, windows-latest]
+        cmd: [dotnet build -c Release]
         include:
           - dotnet: 5.0.406
             os: ubuntu-latest
+            cmd: dotnet build -c Release -f net5.0
     runs-on: ${{ matrix.os }}
     steps:
       - name: Support longpaths
@@ -46,7 +48,7 @@ jobs:
           dotnet-version: ${{ matrix.dotnet }}
       - name: Build with dotnet
         if: env.SKIP_CI != 'true'
-        run: dotnet build --configuration Release
+        run: ${{ matrix.cmd }}
 
   check-license-header:
     name: Check License Header
