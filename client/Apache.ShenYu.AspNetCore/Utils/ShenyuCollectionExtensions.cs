@@ -29,7 +29,6 @@ namespace Apache.ShenYu.AspNetCore.Utils
     {
         /// <summary>
         /// Add Shenyu register
-        ///
         /// </summary>
         /// <param name="services"></param>
         /// <param name="configuration"></param>

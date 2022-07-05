@@ -15,7 +15,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <Version>2.5.0</Version>
     <FileVersion>$(Version)</FileVersion>
     <Company>Apache Software Foundation</Company>
@@ -36,15 +36,37 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Apache.ShenYu.Client\Apache.ShenYu.Client.csproj" />
+    <ProjectReference Include="..\Apache.ShenYu.Client\Apache.ShenYu.Client.csproj"/>
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
+  <ItemGroup Condition="$(TargetFramework) == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0"/>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5"/>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0"/>
+
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.26"/>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.26"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework) == 'netcoreapp3.1'">
+    <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.26"/>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.26"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework) == 'net5.0'">
+    <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0"/>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework) == 'net6.0'">
+    <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0"/>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0"/>
   </ItemGroup>
 
 </Project>
