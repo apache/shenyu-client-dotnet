@@ -27,6 +27,9 @@ jobs:
       matrix:
         dotnet: [6.0.201]
         os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - dotnet: 5.0.406
+            os: ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Support longpaths
@@ -43,7 +46,7 @@ jobs:
           dotnet-version: ${{ matrix.dotnet }}
       - name: Build with dotnet
         if: env.SKIP_CI != 'true'
-        run: dotnet build -c Release
+        run: dotnet build --configuration Release
 
   check-license-header:
     name: Check License Header
