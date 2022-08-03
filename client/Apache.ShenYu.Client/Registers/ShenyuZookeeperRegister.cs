@@ -29,7 +29,7 @@ using org.apache.zookeeper;
 
 namespace Apache.ShenYu.Client.Registers
 {
-    public class ShenyuZookeeperRegister : IShenyuRegister
+    public class ShenyuZookeeperRegister : ShenyuAbstractRegister
     {
         private readonly ILogger<ShenyuZookeeperRegister> _logger;
         private string _serverList;
@@ -43,7 +43,7 @@ namespace Apache.ShenYu.Client.Registers
             _logger = logger;
         }
 
-        public Task Init(ShenyuOptions shenyuOptions)
+        public override Task Init(ShenyuOptions shenyuOptions)
         {
             this._shenyuOptions = shenyuOptions;
             this._serverList = shenyuOptions.Register.ServerList;
@@ -55,7 +55,7 @@ namespace Apache.ShenYu.Client.Registers
             return Task.CompletedTask;
         }
 
-        public async Task PersistInterface(MetaDataRegisterDTO metadata)
+        public override async Task PersistInterface(MetaDataRegisterDTO metadata)
         {
             // build metadata path
             string rpcType = metadata.rpcType;
@@ -87,7 +87,7 @@ namespace Apache.ShenYu.Client.Registers
             }
         }
 
-        public async Task PersistURI(URIRegisterDTO registerDTO)
+        public override async Task PersistURI(URIRegisterDTO registerDTO)
         {
             // build uri path
             string contextPath = BuildContextNodePath(registerDTO.contextPath, registerDTO.appName);
@@ -111,7 +111,7 @@ namespace Apache.ShenYu.Client.Registers
             }
         }
 
-        public async Task Close()
+        public override async Task Close()
         {
             await this._zkClient.closeAsync();
         }
@@ -134,33 +134,6 @@ namespace Apache.ShenYu.Client.Registers
             }
 
             return zk;
-        }
-
-        private string BuildContextNodePath(string contextPath, string appName)
-        {
-            return string.IsNullOrEmpty(contextPath)
-                ? appName
-                : (contextPath.StartsWith("/")
-                    ? contextPath.Substring(1)
-                    : contextPath);
-        }
-
-        private string BuildMetadataNodeName(MetaDataRegisterDTO metadata)
-        {
-            string nodeName;
-            string rpcType = metadata.rpcType;
-
-            if (Constants.RegisterRpcType.Http.Equals(rpcType) || Constants.RegisterRpcType.SpringCloud.Equals(rpcType))
-            {
-                nodeName = string.Join(Constants.SelectorJoinRule, metadata.contextPath,
-                    metadata.ruleName.Replace(Constants.PathSeparator, Constants.SelectorJoinRule));
-            }
-            else
-            {
-                nodeName = string.Join(".", metadata.serviceName, metadata.methodName);
-            }
-
-            return nodeName.StartsWith(Constants.PathSeparator) ? nodeName.Substring(1) : nodeName;
         }
 
         class StatWatcher : Watcher
