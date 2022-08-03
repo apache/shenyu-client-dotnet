@@ -27,7 +27,7 @@ namespace Apache.ShenYu.Client.Utils
 
         public const string MetaType = "metadata";
         public const string UriType = "uri";
-        
+
         public const string SelectorJoinRule = "-";
         public const string PathSeparator = "/";
         public const string DotSeparator = ".";
@@ -36,19 +36,20 @@ namespace Apache.ShenYu.Client.Utils
         {
             public const string Http = "http";
             public const string Zookeeper = "zookeeper";
+            public const string Consul = "consul";
         }
-        
+
         public class RegisterRpcType
         {
             public const string Http = "http";
             public const string SpringCloud = "springCloud";
         }
-        
+
         public class RegisterConstants
         {
             public const string UserName = "UserName";
             public const string Password = "Password";
-            
+
             public const string SessionTimeout = "SessionTimeout";
             public const string ConnectionTimeout = "SessionTimeout";
         }

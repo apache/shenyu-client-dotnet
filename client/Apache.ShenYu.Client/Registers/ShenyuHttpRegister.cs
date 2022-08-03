@@ -30,7 +30,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Apache.ShenYu.Client.Registers
 {
-    public class ShenyuHttpRegister : IShenyuRegister
+    public class ShenyuHttpRegister : ShenyuAbstractRegister
     {
         private List<string> ServerList { get; set; }
 
@@ -48,7 +48,7 @@ namespace Apache.ShenYu.Client.Registers
             this._logger = logger;
         }
 
-        public async Task Init(ShenyuOptions shenyuOptions)
+        public override async Task Init(ShenyuOptions shenyuOptions)
         {
             this._shenyuOptions = shenyuOptions;
             this._shenyuOptions.Register.Props.TryGetValue(Constants.RegisterConstants.UserName, out this._userName);
@@ -59,18 +59,18 @@ namespace Apache.ShenYu.Client.Registers
             await this.SetAccessTokens();
         }
 
-        public async Task PersistInterface(MetaDataRegisterDTO metadata)
+        public override async Task PersistInterface(MetaDataRegisterDTO metadata)
         {
             await this.DoRegister(metadata, Constants.MetaPath, Constants.MetaType);
         }
 
-        public async Task PersistURI(URIRegisterDTO registerDTO)
+        public override async Task PersistURI(URIRegisterDTO registerDTO)
         {
             await this.DoRegister(registerDTO, Constants.UriPath, Constants.UriType);
             this._uriRegisterDto = registerDTO;
         }
 
-        public Task Close()
+        public override Task Close()
         {
             throw new NotImplementedException();
         }
