@@ -79,9 +79,9 @@ namespace Apache.ShenYu.Client.Registers
             return Task.CompletedTask;
         }
 
-        public override Task Close()
+        public override async Task Close()
         {
-            return Task.CompletedTask;
+            await this._client.Agent.ServiceDeregister(this._shenyuOptions.Register.Props["Id"]);
         }
     }
 }
