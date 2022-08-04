@@ -69,6 +69,11 @@ namespace Apache.ShenYu.AspNetCore.Utils
                     services.AddSingleton<IShenyuRegister, ShenyuConsulRegister>();
                     break;
                 }
+                case Constants.RegisterType.Nacos:
+                {
+                    services.AddSingleton<IShenyuRegister, ShenyuNacosRegister>();
+                    break;
+                }
                 default:
                     throw new Exception($"not supported type {shenyuOptions.Register.RegisterType}");
             }
