@@ -56,9 +56,9 @@ jobs:
       - name: Start Docker Compose
         run: docker-compose -f ./build/docker-compose-${{ matrix.case }}.yml up -d
 
+      # replace with check health step
       - name: Run tests
         run: |
-#           replace with check health step
           sleep 30s
           cd client/Tests/Apache.ShenYu.IntegrationTests
           dotnet test
