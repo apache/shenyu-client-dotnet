@@ -8,5 +8,5 @@ ENV ASPNETCORE_URLS=http://+:5000
 # FROM base AS final
 WORKDIR /app
 # COPY --from=publish /app/publish .
-ADD ./bin/Release/netcoreapp3.1/* /app
+ADD ./bin/Release/netcoreapp3.1/ /app
 ENTRYPOINT ["dotnet", "AspNetCoreExample.dll"]
