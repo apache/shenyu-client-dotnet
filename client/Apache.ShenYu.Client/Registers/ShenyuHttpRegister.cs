@@ -91,9 +91,12 @@ namespace Apache.ShenYu.Client.Registers
         {
             var builder = new UriBuilder(server)
             {
-                Path = Constants.LoginPath, Query = $"userName={this._userName}&password={this._password}"
+                Path = Constants.LoginPath,
+                Query = $"userName={this._userName}&password={this._password}"
             };
-            var resp = await this._client.GetStringAsync(builder.ToString());
+            var str = builder.ToString();
+            System.Console.WriteLine(str);
+            var resp = await this._client.GetStringAsync(str);
             var jObject = JObject.Parse(resp);
             var token = jObject.SelectToken("$.data.token")?.ToString();
 

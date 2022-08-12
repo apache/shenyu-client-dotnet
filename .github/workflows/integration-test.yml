@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: code-coverage
+name: integration-test
 
 on:
   pull_request:
@@ -23,28 +23,40 @@ on:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        case:
+          - http
+    #          - zookeeper
+    #          - consul
+    #          - nacos
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
+
       - name: Set Skip Env Var
         uses: ./.github/actions/skip-ci
+
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v2.1.0
         with:
           dotnet-version: 5.0.406
 
-      - name: Unit Test with dotnet
+      - name: Build with dotnet
+        if: env.SKIP_CI != 'true'
+        run: dotnet build --configuration Release
+
+      - name: Build docker image for dotnet example
         run: |
-          cd client/Tests/Apache.ShenYu.Client.Tests
-          dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release
+          cd ./examples/AspNetCoreExample/
+          docker build -t dotnet-example
 
-      - name: Install report tool
-        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+      - name: Start Docker Compose
+        run: docker-compose -f ./build/docker-compose-${{ matrix.case }}.yml up -d
 
-      - name: Merging test results
-        run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura
-
-      - name: Codecov
-        uses: codecov/codecov-action@v3
+      - name: Run tests
+        run: |
+          cd client/Tests/Apache.ShenYu.IntegrationTests
+          dotnet test
