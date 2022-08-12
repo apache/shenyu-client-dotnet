@@ -58,6 +58,7 @@ jobs:
 
       - name: Run tests
         run: |
+#           replace with check health step
           sleep 30s
           cd client/Tests/Apache.ShenYu.IntegrationTests
           dotnet test

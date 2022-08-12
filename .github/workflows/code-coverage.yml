@@ -37,8 +37,7 @@ jobs:
 
       - name: Unit Test with dotnet
         run: |
-          cd client/Tests/Apache.ShenYu.Client.Tests
-          dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release
+          dotnet test ./client/Tests/Apache.ShenYu.Client.Tests/Apache.ShenYu.Client.Tests.csproj --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release
 
       - name: Install report tool
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
