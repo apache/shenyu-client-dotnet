@@ -37,6 +37,7 @@ namespace Apache.ShenYu.Client.Utils
             public const string Http = "http";
             public const string Zookeeper = "zookeeper";
             public const string Consul = "consul";
+            public const string Nacos = "nacos";
         }
 
         public class RegisterRpcType
