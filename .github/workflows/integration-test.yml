@@ -22,7 +22,7 @@ on:
       - main
 
 jobs:
-  build:
+  integration-test:
     strategy:
       matrix:
         case:
@@ -51,7 +51,7 @@ jobs:
       - name: Build docker image for dotnet example
         run: |
           cd ./examples/AspNetCoreExample/
-          docker build -t dotnet-example
+          docker build -t dotnet-example .
 
       - name: Start Docker Compose
         run: docker-compose -f ./build/docker-compose-${{ matrix.case }}.yml up -d
