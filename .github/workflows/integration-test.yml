@@ -58,5 +58,6 @@ jobs:
 
       - name: Run tests
         run: |
+          sleep 30s
           cd client/Tests/Apache.ShenYu.IntegrationTests
           dotnet test
