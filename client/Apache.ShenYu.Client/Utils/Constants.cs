@@ -27,6 +27,8 @@ namespace Apache.ShenYu.Client.Utils
 
         public const string MetaType = "metadata";
         public const string UriType = "uri";
+        public const string CONTEXT = "context";
+        public const string CONTEXT_PATH = "contextPath";
 
         public const string SelectorJoinRule = "-";
         public const string PathSeparator = "/";
