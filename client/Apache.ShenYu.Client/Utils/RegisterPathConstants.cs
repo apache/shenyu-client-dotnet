@@ -154,7 +154,7 @@ namespace Apache.ShenYu.Client.Utils
         /// <param name="serviceName"> the service name </param>
         /// <param name="methodName"> the method name </param>
         /// <returns> the string </returns>
-        public static string buildNodeName(string serviceName,string methodName)
+        public static string BuildNodeName(string serviceName,string methodName)
         {
             return String.Join(DOT_SEPARATOR, serviceName, methodName);
         }

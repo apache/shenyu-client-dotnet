@@ -36,7 +36,7 @@ namespace Apache.ShenYu.Client.Registers
             }
             else
             {
-                nodeName = string.Join(".", metadata.serviceName, metadata.methodName);
+                nodeName = RegisterPathConstants.BuildNodeName(metadata.serviceName, metadata.methodName);
             }
 
             return nodeName.StartsWith(Constants.PathSeparator) ? nodeName.Substring(1) : nodeName;
