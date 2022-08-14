@@ -35,6 +35,7 @@ namespace Apache.ShenYu.Client.Registers
         private ShenyuOptions _shenyuOptions;
         private ZookeeperClient _zkClient;
         private Dictionary<string, string> _nodeDataMap = new Dictionary<string, string>();
+
         //private HashSet<string> _metadataSet = new HashSet<string>();
         private ConcurrentDictionary<string, RegistryCenterHealthCheckModel> m_healthCheck = new ConcurrentDictionary<string, RegistryCenterHealthCheckModel>();
 
@@ -144,13 +145,6 @@ namespace Apache.ShenYu.Client.Registers
                       CreateMode.EPHEMERAL);
         }
 
-        private string BuildURINodeName(URIRegisterDTO registerDTO)
-        {
-            string host = registerDTO.host;
-            int port = registerDTO.port;
-            return String.Join(Constants.COLONS, host, port.ToString());
-        }
-
         private async Task RegisterMetadataAsync(string contextPath, MetaDataRegisterDTO metadata)
         {
             string metadataNodeName = BuildMetadataNodeName(metadata);
@@ -173,8 +167,8 @@ namespace Apache.ShenYu.Client.Registers
 
         public override async Task Close()
         {
-           this._zkClient.Dispose();
-           await Task.CompletedTask;
+            this._zkClient.Dispose();
+            await Task.CompletedTask;
         }
     }
 }

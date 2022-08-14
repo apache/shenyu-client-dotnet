@@ -15,21 +15,33 @@
  * limitations under the License.
  */
 
-using System;
-using Apache.ShenYu.Client.Utils;
-using Xunit;
-
-namespace Apache.ShenYu.Client.Tests.Utils
+namespace Apache.ShenYu.Client.Utils
 {
-    public class UriUtilsTest
+    /// <summary>
+    /// etcd options
+    /// </summary>
+    public class EtcdOptions
     {
-        [Fact]
-        public void GetPathWithParamsTest()
-        {
-            string url = "http://127.0.0.1:8848/nacos/index.html#/serviceDetail?name=shenyu.register.service.http&groupName=DEFAULT_GROUP";
-            Uri uri = new Uri(url);
-           var path= UriUtils.GetPathWithParams(uri);
-            Assert.True(path == url);
-        }
+        /// <summary>
+        /// Etcd address
+        /// </summary>
+        public string Address { get; set; }
+
+        /// <summary>
+        /// Etcd access UserNae
+        /// </summary>
+        public string UserName { get; set; }
+
+        /// <summary>
+        /// Etcd access pwd
+        /// </summary>
+        public string Password { get; set; }
+
+        public long Timeout { get; set; }
+
+        /// <summary>
+        /// life time ttl
+        /// </summary>
+        public long TTL { get; set; }
     }
 }

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Threading.Tasks;
 using Apache.ShenYu.Client.Models.DTO;
 using Apache.ShenYu.Client.Options;
@@ -51,9 +52,19 @@ namespace Apache.ShenYu.Client.Registers
                     : contextPath);
         }
 
+        protected string BuildURINodeName(URIRegisterDTO registerDTO)
+        {
+            string host = registerDTO.host;
+            int port = registerDTO.port;
+            return String.Join(Constants.COLONS, host, port.ToString());
+        }
+
         public abstract Task Init(ShenyuOptions shenyuOptions);
+
         public abstract Task PersistInterface(MetaDataRegisterDTO metadata);
+
         public abstract Task PersistURI(URIRegisterDTO registerDTO);
+
         public abstract Task Close();
     }
 }
