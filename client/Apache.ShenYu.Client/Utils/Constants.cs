@@ -33,6 +33,7 @@ namespace Apache.ShenYu.Client.Utils
         public const string SelectorJoinRule = "-";
         public const string PathSeparator = "/";
         public const string DotSeparator = ".";
+        public const string COLONS = ":";
 
         public class RegisterType
         {
@@ -54,7 +55,10 @@ namespace Apache.ShenYu.Client.Utils
             public const string Password = "Password";
 
             public const string SessionTimeout = "SessionTimeout";
-            public const string ConnectionTimeout = "SessionTimeout";
+            public const string ConnectionTimeout = "ConnectionTimeout";
+            public const string MaxRetry = "MaxRetries";
+            public const string BaseSleepTime = "BaseSleepTime";
+            public const string MaxSleepTime = "MaxSleepTime";
         }
     }
 }
