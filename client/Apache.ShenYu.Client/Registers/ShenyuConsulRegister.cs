@@ -57,17 +57,6 @@ namespace Apache.ShenYu.Client.Registers
 
         public override async Task PersistInterface(MetaDataRegisterDTO metadata)
         {
-            /** orignal code ,now use below
-            var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            string contextPath = ContextPathUtils.BuildRealNode(metadata.contextPath, metadata.appName);
-            string parentPath = $"/shenyu/register/metadata/{metadata.rpcType}/{contextPath}";
-            string nodeName = BuildMetadataNodeName(metadata);
-            string nodePath = $"{parentPath}/{nodeName}".Substring(1);
-            var putPair = new KVPair(nodePath) { Value = Encoding.UTF8.GetBytes(metadataStr) };
-            await this._client.KV.Put(putPair);
-            **/
-
             string contextPath = ContextPathUtils.BuildRealNode(metadata.contextPath, metadata.appName);
             string metadataNodeName = BuildMetadataNodeName(metadata);
             string metaDataPath = RegisterPathConstants.BuildMetaDataParentPath(metadata.rpcType, contextPath);
@@ -84,47 +73,35 @@ namespace Apache.ShenYu.Client.Registers
         {
             var uriRegString = JsonConvert.SerializeObject(registerDTO, Formatting.None,
                 new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            var dic = new Dictionary<string, string> { { "uri", uriRegString } };
+            var dic = new Dictionary<string, string> { { Constants.UriType, uriRegString } };
             _service.Meta = dic;
             this._client.Agent.ServiceRegister(_service);
-            /** orignal code ,now use below
-            this._client.Agent.ServiceRegister(new AgentServiceRegistration
-            {
-                ID = this._shenyuOptions.Register.Props["Id"],
-                Name = this._shenyuOptions.Register.Props["Name"],
-                Tags = this._shenyuOptions.Register.Props["Tags"].Split(','),
-                Port = Int32.Parse(this._shenyuOptions.Register.Props["Port"]),
-                Address = "localhost",
-                EnableTagOverride = Boolean.Parse(this._shenyuOptions.Register.Props["EnableTagOverride"]),
-                Meta = dic,
-            });
-            **/
-
             return Task.CompletedTask;
         }
 
         public override async Task Close()
         {
-            await this._client.Agent.ServiceDeregister(this._shenyuOptions.Register.Props["Id"]);
+            await this._client.Agent.ServiceDeregister(this._shenyuOptions.Register.Props[Constants.RegisterConstants.Id]);
         }
 
         private AgentServiceRegistration GetAgentService()
         {
+            var props = this._shenyuOptions.Register.Props;
             //check data
-            string appName = NormalizeForDns(this._shenyuOptions.Register.Props["Name"]);
-            string instanceId = NormalizeForDns(this._shenyuOptions.Register.Props["Id"]);
-            string portStr = this._shenyuOptions.Register.Props["Port"];
+            string appName = NormalizeForDns(props[Constants.RegisterConstants.Name]);
+            string instanceId = NormalizeForDns(props[Constants.RegisterConstants.Id]);
+            string portStr = props[Constants.RegisterConstants.Port];
             if (string.IsNullOrEmpty(portStr))
             {
                 throw new System.ArgumentException("Port can not be null.");
             }
-            string tagsStr = this._shenyuOptions.Register.Props["Tags"];
+            string tagsStr = props[Constants.RegisterConstants.Tags];
             string[] tags = null ;
             if (!string.IsNullOrEmpty(tagsStr))
             {
                 tags = tagsStr.Split(',');
             }
-            string address = this._shenyuOptions.Register.Props["HostName"] ?? "localhost";
+            string address = props.GetValueOrDefault(Constants.RegisterConstants.HostName,"localhost");
             _service = new AgentServiceRegistration
             {
                 ID = instanceId,
@@ -132,7 +109,7 @@ namespace Apache.ShenYu.Client.Registers
                 Tags = tags,
                 Port = Int32.Parse(portStr),
                 Address = address,
-                EnableTagOverride = Boolean.Parse(this._shenyuOptions.Register.Props["EnableTagOverride"] ?? "false")
+                EnableTagOverride = Boolean.Parse(props.GetValueOrDefault(Constants.RegisterConstants.EnableTagOverride, "false"))
             };
             return _service;
         }

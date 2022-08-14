@@ -35,7 +35,7 @@ namespace Apache.ShenYu.Client.Registers
     public class ShenyuNacosRegister : ShenyuAbstractRegister
     {
         private readonly ILogger<ShenyuNacosRegister> _logger;
-        private static string _nacosNameSpace = "nacosNameSpace";
+        private static string _nacosNameSpace = "NacosNameSpace";
         private static string  _uriMetadata = "uriMetadata";
         private static string _nacosDefaultGroup = "DEFAULT_GROUP";
         private readonly ILoggerFactory _loggerFactory;
@@ -70,40 +70,12 @@ namespace Apache.ShenYu.Client.Registers
 
         public override async Task PersistInterface(MetaDataRegisterDTO metadata)
         {
-            /** orignal code ,now use below
-            var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            string configPath = $"shenyu.register.service.{metadata.rpcType}.{metadata.contextPath.Substring(1)}";
-            lock (this.metadataSet)
-            {
-                this.metadataSet.Add(metadataStr);
-            }
-
-            var set = JsonConvert.SerializeObject(this.metadataSet, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            await this._configService.PublishConfig(configPath, "DEFAULT_GROUP", set);
-            **/
-
             string contextPath = ContextPathUtils.BuildRealNode(metadata.contextPath, metadata.appName);
             await RegisterConfigAsync(contextPath, metadata);
         }
 
         public override async Task PersistURI(URIRegisterDTO registerDTO)
         {
-            /** orignal code ,now use below
-            string serviceName = $"shenyu.register.service.{registerDTO.rpcType}";
-            var uriRegString = JsonConvert.SerializeObject(registerDTO, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            Instance instance = new Instance();
-            instance.Ephemeral = true;
-            instance.Ip = registerDTO.host;
-            instance.Port = registerDTO.port;
-            instance.Metadata = new Dictionary<string, string>();
-            instance.Metadata.Add("contextPath", registerDTO.contextPath.Substring(1));
-            instance.Metadata.Add("uriMetadata", uriRegString);
-            await this._namingService.RegisterInstance(serviceName, instance).ConfigureAwait(false);
-            **/
-
             string contextPath = ContextPathUtils.BuildRealNode(registerDTO.contextPath, registerDTO.appName);
             await RegisterServiceAsync(contextPath,registerDTO);
         }

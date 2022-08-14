@@ -63,6 +63,13 @@ namespace Apache.ShenYu.Client.Utils
             //etcd
             public const string EtcdTimeout = "EtcdTimeout";
             public const string EtcdTTL = "EtcdTTL";
+            //conusl
+            public const string Id = "Id";
+            public const string Name = "Name";
+            public const string Port = "Port";
+            public const string HostName = "HostName";
+            public const string Tags = "Tags";
+            public const string EnableTagOverride = "EnableTagOverride";
         }
     }
 }
