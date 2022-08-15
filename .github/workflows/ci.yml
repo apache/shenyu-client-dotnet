@@ -40,10 +40,12 @@ jobs:
           submodules: true
       - name: Set Skip Env Var
         uses: ./.github/actions/skip-ci
+
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v2.1.0
         with:
           dotnet-version: ${{ matrix.dotnet }}
+          
       - name: Build with dotnet
         if: env.SKIP_CI != 'true'
         run: dotnet build --configuration Release

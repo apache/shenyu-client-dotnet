@@ -40,6 +40,7 @@ jobs:
         uses: ./.github/actions/skip-ci
 
       - name: Setup .NET Core SDK
+        if: env.SKIP_CI != 'true'
         uses: actions/setup-dotnet@v2.1.0
         with:
           dotnet-version: 5.0.406
@@ -49,15 +50,18 @@ jobs:
         run: dotnet build --configuration Release
 
       - name: Build docker image for dotnet example
+        if: env.SKIP_CI != 'true'
         run: |
           cd ./examples/AspNetCoreExample/
           docker build -t dotnet-example .
 
       - name: Start Docker Compose
+        if: env.SKIP_CI != 'true'
         run: docker-compose -f ./build/docker-compose-${{ matrix.case }}.yml up -d
 
       # replace with check health step
       - name: Run tests
+        if: env.SKIP_CI != 'true'
         run: |
           sleep 30s
           cd client/Tests/Apache.ShenYu.IntegrationTests
