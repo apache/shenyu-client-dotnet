@@ -18,7 +18,6 @@
 using System.Threading.Tasks;
 using Apache.ShenYu.Client.Models.DTO;
 using Apache.ShenYu.Client.Options;
-using Apache.ShenYu.Client.Utils;
 
 namespace Apache.ShenYu.Client.Registers
 {

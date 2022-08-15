@@ -131,7 +131,7 @@ namespace Apache.ShenYu.AspNetCore.Services
                                 var methodShenyuAttr = method.GetCustomAttribute<ShenyuClientAttribute>();
                                 var path = this.GetPath(methodShenyuAttr, methodRouteAttr);
 
-                                var wholePath = path == null ? basePath : Path.Combine("/", basePath, path);
+                                var wholePath = path == null ? basePath : Path.Combine("/", basePath, path.TrimStart('/'));
                                 //fix if wholePath like "path01\\path02"
                                 if(wholePath != null && wholePath.Contains("\\")){
                                     wholePath = wholePath.Replace("\\", "/");

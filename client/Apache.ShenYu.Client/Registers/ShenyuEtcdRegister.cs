@@ -30,9 +30,7 @@ namespace Apache.ShenYu.Client.Registers
     {
         private readonly ILogger<ShenyuEtcdRegister> _logger;
         private EtcdClientUtils _etcdClient;
-        private static string _uriMetadata = "uriMetadata";
         private ShenyuOptions _shenyuOptions;
-        private HashSet<string> metadataSet = new HashSet<string>();
 
         public ShenyuEtcdRegister(ILogger<ShenyuEtcdRegister> logger)
         {

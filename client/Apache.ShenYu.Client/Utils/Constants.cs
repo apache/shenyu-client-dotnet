@@ -70,6 +70,9 @@ namespace Apache.ShenYu.Client.Utils
             public const string HostName = "HostName";
             public const string Tags = "Tags";
             public const string EnableTagOverride = "EnableTagOverride";
+            //nacos
+            public const string AccessKey = "AccessKey";
+            public const string SecretKey = "SecretKey";
         }
     }
 }

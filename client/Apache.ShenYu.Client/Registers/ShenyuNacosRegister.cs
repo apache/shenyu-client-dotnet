@@ -55,11 +55,16 @@ namespace Apache.ShenYu.Client.Registers
         public override async Task Init(ShenyuOptions shenyuOptions)
         {
             this._shenyuOptions = shenyuOptions;
-            NacosSdkOptions options = JsonConvert.DeserializeObject<NacosSdkOptions>(JsonConvert.SerializeObject(shenyuOptions.Register.Props));
-            // special handler this 
+            NacosSdkOptions options = new NacosSdkOptions();
+            //props
+            var props = shenyuOptions.Register.Props;
             options.ServerAddresses = this._shenyuOptions.Register.ServerList?.Split(',').ToList();//cluster split with ,                                                                                                
-            this._shenyuOptions.Register.Props.TryGetValue(_nacosNameSpace, out string nacosNameSpace);
-            options.Namespace = string.IsNullOrEmpty(nacosNameSpace) ? options.Namespace : nacosNameSpace;
+            props.TryGetValue(_nacosNameSpace, out string nacosNameSpace);
+            options.Namespace = nacosNameSpace;
+            options.UserName= props.GetValueOrDefault(Constants.RegisterConstants.UserName, "");
+            options.Password= props.GetValueOrDefault(Constants.RegisterConstants.Password,"");
+            options.AccessKey = props.GetValueOrDefault(Constants.RegisterConstants.AccessKey, "");
+            options.SecretKey = props.GetValueOrDefault(Constants.RegisterConstants.SecretKey, "");
             var op = Microsoft.Extensions.Options.Options.Create(options);
 
             this._namingService = new NacosNamingService(this._loggerFactory, op, this._httpClientFactory);

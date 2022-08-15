@@ -72,14 +72,14 @@ namespace Apache.ShenYu.Client.Utils
                 });
                 this._globalLeaseId = response.ID;
                 var tokenSource = new CancellationTokenSource();
-
-                this._client.LeaseKeepAlive(new LeaseKeepAliveRequest()
-                {
-                    ID = _globalLeaseId
-                }, (x) =>
-                {
-                    Console.WriteLine(x.ID);
-                }, tokenSource.Token, _metadata);
+                this._client.LeaseKeepAlive(this._globalLeaseId, tokenSource.Token);
+                //this._client.LeaseKeepAlive(new LeaseKeepAliveRequest()
+                //{
+                //    ID = _globalLeaseId
+                //}, (x) =>
+                //{
+                //    Console.WriteLine(x.ID);
+                //}, tokenSource.Token, _metadata);
             }
             catch (Exception ex)
             {
