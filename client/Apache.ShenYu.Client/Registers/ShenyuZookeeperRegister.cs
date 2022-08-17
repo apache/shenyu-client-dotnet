@@ -52,12 +52,10 @@ namespace Apache.ShenYu.Client.Registers
             var props = shenyuOptions.Register.Props;
             int sessionTimeout = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.SessionTimeout, "3000"));
             int connectionTimeout = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.ConnectionTimeout, "3000"));
-            int baseSleepTime = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.BaseSleepTime, "1000"));
-            int maxRetries = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.MaxRetry, "3"));
-            int maxSleepTime = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.MaxSleepTime, int.MaxValue.ToString()));
+            int operatingTimeout = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.OperatingTimeout, "1000"));
+        
             ZkOptions zkConfig = new ZkOptions(serverList);
-            zkConfig.SetMaxRetry(maxRetries)
-                    .SetOperatingTimeout(baseSleepTime)
+            zkConfig.SetOperatingTimeout(operatingTimeout)
                     .SetSessionTimeout(sessionTimeout)
                     .SetConnectionTimeout(connectionTimeout);
 

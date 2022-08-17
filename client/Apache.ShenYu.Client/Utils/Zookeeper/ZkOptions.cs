@@ -95,11 +95,6 @@ namespace Apache.ShenYu.Client.Utils
             return this;
         }
 
-        public ZkOptions SetMaxRetry(int maxRetry)
-        {
-            this.RetryCount = maxRetry;
-            return this;
-        }
 
         public ZkOptions SetSessionPassword(string sessionPassword)
         {
@@ -111,11 +106,6 @@ namespace Apache.ShenYu.Client.Utils
         /// connect string
         /// </summary>
         public string ConnectionString { get; set; }
-
-        /// <summary>
-        /// retry count
-        /// </summary>
-        public int RetryCount { get; set; } = 3;
 
         /// <summary>
         /// readonly

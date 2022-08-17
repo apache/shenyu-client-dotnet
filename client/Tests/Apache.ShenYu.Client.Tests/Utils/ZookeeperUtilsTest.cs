@@ -30,7 +30,7 @@ namespace Apache.ShenYu.Client.Tests.Utils
         public async Task ZkClientTest()
         {
             ZkOptions zkConfig = new ZkOptions("127.0.0.1:2181");
-            zkConfig.SetMaxRetry(3)
+            zkConfig
                     .SetOperatingTimeout(50000)
                     .SetSessionTimeout(100000000)
                     .SetConnectionTimeout(10000000);
