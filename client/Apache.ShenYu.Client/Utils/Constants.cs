@@ -58,9 +58,7 @@ namespace Apache.ShenYu.Client.Utils
             //zookeeper
             public const string SessionTimeout = "SessionTimeout";
             public const string ConnectionTimeout = "ConnectionTimeout";
-            public const string MaxRetry = "MaxRetries";
-            public const string BaseSleepTime = "BaseSleepTime";
-            public const string MaxSleepTime = "MaxSleepTime";
+            public const string OperatingTimeout = "OperatingTimeout";
             //etcd
             public const string EtcdTimeout = "EtcdTimeout";
             public const string EtcdTTL = "EtcdTTL";
