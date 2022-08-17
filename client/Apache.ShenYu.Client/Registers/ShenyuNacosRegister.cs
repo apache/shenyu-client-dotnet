@@ -35,7 +35,7 @@ namespace Apache.ShenYu.Client.Registers
     public class ShenyuNacosRegister : ShenyuAbstractRegister
     {
         private readonly ILogger<ShenyuNacosRegister> _logger;
-        private static string _nacosNameSpace = "NacosNameSpace";
+        private static string _nacosNameSpace = "Namespace";
         private static string  _uriMetadata = "uriMetadata";
         private static string _nacosDefaultGroup = "DEFAULT_GROUP";
         private readonly ILoggerFactory _loggerFactory;

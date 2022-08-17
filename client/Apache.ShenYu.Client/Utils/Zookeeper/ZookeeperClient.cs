@@ -362,7 +362,7 @@ namespace Apache.ShenYu.Client.Utils
 
         private async Task ReConnect()
         {
-            if (!Monitor.TryEnter(_zkEventLock, _options.ConnectionTimeout))
+            if (!Monitor.TryEnter(_zkEventLock, _options.ConnectionSpanTimeout))
                 return;
             try
             {
