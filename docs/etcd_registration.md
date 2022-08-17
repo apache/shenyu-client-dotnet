@@ -28,25 +28,24 @@ public void ConfigureServices(IServiceCollection services)
 {
     "Shenyu": {
         "Register": {
-            "RegisterType": "zookeeper",
-            "ServerList": "localhost:2181",
-            "Props": {
-                // 3000 ms by default
-                "SessionTimeout": 60000,
-               //3000 ms by default
-                "ConnectionTimeout": 60000,
-                // 1000 ms by default
-                "OperatingTimeout": 1000,
-                // pwd
-                "Password": "",
-
-            }
+        "ServerList": "http://127.0.0.1:2379",
+        "RegisterType": "etcd",
+        "Props": {
+            // etcd userName,if have not set ectd server userName,this parmas can empty
+            "UserName": "",
+            // etcd password,if have not set ectd server password,this parmas can empty
+            "Password": "",
+            // 3000 ms default
+            "EtcdTimeout": 4000,
+            // 5 ms default
+            "EtcdTTL": 15
+        }
         },
         "Client": {
-            "AppName": "dotnet-example",
-            "ContextPath": "/dotnet",
-            "IsFull": false,
-            "ClientType": "http"
+        "AppName": "dotnetexampleetcd",
+        "ContextPath": "/etcddotnet",
+        "IsFull": false,
+        "ClientType": "http"
         }
     }
 }
