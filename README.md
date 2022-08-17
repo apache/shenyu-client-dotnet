@@ -9,6 +9,7 @@ ShenYu .NET client can help you register your ASP.NET Core applications into She
 - zookeeper registration
 - nacos registration
 - consul registration
+- etcd registration
 
 ## Getting Started
 
@@ -21,6 +22,8 @@ For zookeeper registration, please visit [Zookeeper Registration](./docs/zookeep
 For consul registration, please visit [Consul Registration](./docs/consul_registration.md).
 
 For nacos registration, please visit [Nacos Registration](./docs/nacos_registration.md).
+
+For etcd registration, please visit [Etcd Registration](./docs/etcd_registration.md).
 
 ## Attributes
 
