@@ -34,6 +34,7 @@ namespace Apache.ShenYu.Client.Utils
         public const string PathSeparator = "/";
         public const string DotSeparator = ".";
         public const string COLONS = ":";
+        public const string DoubleSlash = "\\";
 
         public class RegisterType
         {

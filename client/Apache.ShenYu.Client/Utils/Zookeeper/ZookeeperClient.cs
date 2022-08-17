@@ -16,14 +16,14 @@
  */
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Apache.ShenYu.Client.Utils.Internal;
 using org.apache.zookeeper;
 using org.apache.zookeeper.data;
+
 #if !NET40
+
 using TaskEx = System.Threading.Tasks.Task;
 
 #endif
@@ -31,14 +31,12 @@ using TaskEx = System.Threading.Tasks.Task;
 namespace Apache.ShenYu.Client.Utils
 {
     /// <summary>
-    /// ZooKeeper client
+    /// zookeeper client
     /// </summary>
     public class ZookeeperClient : Watcher, IZookeeperClient
     {
-        #region Field
-
-        private readonly ConcurrentDictionary<string, NodeEntry> _nodeEntries =
-            new ConcurrentDictionary<string, NodeEntry>();
+        private ZooKeeper _zookeeperClient;
+        private ZkOptions _options;
 
         private ConnectionStateChangeHandler _connectionStateChangeHandler;
 
@@ -49,10 +47,6 @@ namespace Apache.ShenYu.Client.Utils
 
         private bool _isDispose;
 
-        #endregion Field
-
-        #region Constructor
-
         /// <summary>
         /// create client
         /// </summary>
@@ -62,29 +56,17 @@ namespace Apache.ShenYu.Client.Utils
         {
         }
 
-      /// <summary>
-      /// create client
-      /// </summary>
-      /// <param name="options"></param>
+        /// <summary>
+        /// create client
+        /// </summary>
+        /// <param name="options"></param>
         public ZookeeperClient(ZkOptions options)
         {
-            Options = options;
-            ZooKeeper = CreateZooKeeper();
+            _options = options;
+            _zookeeperClient = CreateZooKeeper();
         }
 
-        #endregion Constructor
-
         #region Public Method
-
-        /// <summary>
-        /// ZooKeeperConnect object
-        /// </summary>
-        public ZooKeeper ZooKeeper { get; private set; }
-
-        /// <summary>
-        /// options
-        /// </summary>
-        public ZkOptions Options { get; }
 
         /// <summary>
         /// wait zk connect to give states
@@ -142,10 +124,10 @@ namespace Apache.ShenYu.Client.Utils
                     this.WaitForRetry();
                 }
 
-                if (DateTime.Now - operationStartTime > Options.OperatingSpanTimeout)
+                if (DateTime.Now - operationStartTime > _options.OperatingSpanTimeout)
                 {
                     throw new TimeoutException(
-                        $"Operation cannot be retried because of retry timeout ({Options.OperatingSpanTimeout.TotalMilliseconds} milli seconds)");
+                        $"Operation cannot be retried because of retry timeout ({_options.OperatingSpanTimeout.TotalMilliseconds} milli seconds)");
                 }
             }
         }
@@ -158,20 +140,11 @@ namespace Apache.ShenYu.Client.Utils
         public async Task<IEnumerable<byte>> GetDataAsync(string path)
         {
             path = GetZooKeeperPath(path);
-            var nodeEntry = GetOrAddNodeEntry(path);
-            return await RetryUntilConnected(async () => await nodeEntry.GetDataAsync());
-        }
-
-        /// <summary>
-        /// get childnodes
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns>childnodesList</returns>
-        public async Task<IEnumerable<string>> GetChildrenAsync(string path)
-        {
-            path = GetZooKeeperPath(path);
-            var nodeEntry = GetOrAddNodeEntry(path);
-            return await RetryUntilConnected(async () => await nodeEntry.GetChildrenAsync());
+            return await RetryUntilConnected(async () =>
+            {
+                var data = await _zookeeperClient.getDataAsync(path, false);
+                return data?.Data;
+            });
         }
 
         /// <summary>
@@ -182,8 +155,12 @@ namespace Apache.ShenYu.Client.Utils
         public async Task<bool> ExistsAsync(string path)
         {
             path = GetZooKeeperPath(path);
-            var nodeEntry = GetOrAddNodeEntry(path);
-            return await RetryUntilConnected(async () => await nodeEntry.ExistsAsync());
+            return await RetryUntilConnected(async () =>
+            {
+                var data = await _zookeeperClient.existsAsync(path, false);
+                var exists = data != null;
+                return exists;
+            });
         }
 
         /// <summary>
@@ -195,24 +172,38 @@ namespace Apache.ShenYu.Client.Utils
         /// <param name="createMode"></param>
         /// <returns></returns>
         /// <remarks>
-        /// 
+        ///
         /// </remarks>
         public async Task<string> CreateAsync(string path, byte[] data, List<ACL> acls, CreateMode createMode)
         {
             path = GetZooKeeperPath(path);
-            var nodeEntry = GetOrAddNodeEntry(path);
-            return await RetryUntilConnected(async () => await nodeEntry.CreateAsync(data, acls, createMode));
+            return await RetryUntilConnected(async () =>
+            {
+                path = await _zookeeperClient.createAsync(path, data, acls, createMode);
+                return path;
+            });
         }
 
         public async Task<string> CreateOrUpdateAsync(string path, byte[] data, List<ACL> acls, CreateMode createMode)
         {
             path = GetZooKeeperPath(path);
-            var nodeEntry = GetOrAddNodeEntry(path);
-            return await RetryUntilConnected(async () => await nodeEntry.CreateOrUpdateAsync(data, acls, createMode));
+            return await RetryUntilConnected(async () =>
+            {
+                var existsResult = await _zookeeperClient.existsAsync(path, false) != null;
+                if (existsResult)
+                {
+                    await _zookeeperClient.setDataAsync(path, data);
+                }
+                else
+                {
+                    path = await _zookeeperClient.createAsync(path, data, acls, createMode);
+                }
+                return path;
+            });
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="path"></param>
         /// <param name="data"></param>
@@ -222,8 +213,34 @@ namespace Apache.ShenYu.Client.Utils
         public async Task<bool> CreateWithParentAsync(string path, byte[] data, List<ACL> acls, CreateMode createMode)
         {
             path = GetZooKeeperPath(path);
-            var nodeEntry = GetOrAddNodeEntry(path);
-            return await RetryUntilConnected(async () => await nodeEntry.CreateWithParentAsync(data, acls, createMode));
+            return await RetryUntilConnected(async () =>
+            {
+                var paths = path.Trim('/').Split('/');
+                var cur = "";
+                foreach (var item in paths)
+                {
+                    if (string.IsNullOrEmpty(item))
+                    {
+                        continue;
+                    }
+                    cur += $"/{item}";
+                    var existStat = await _zookeeperClient.existsAsync(cur, null);
+                    if (existStat != null)
+                    {
+                        continue;
+                    }
+
+                    if (cur.Equals(path))
+                    {
+                        await _zookeeperClient.createAsync(cur, data, acls, createMode);
+                    }
+                    else
+                    {
+                        await _zookeeperClient.createAsync(cur, null, acls, createMode);
+                    }
+                }
+                return await Task.FromResult(true);
+            });
         }
 
         /// <summary>
@@ -236,9 +253,11 @@ namespace Apache.ShenYu.Client.Utils
         public async Task<Stat> SetDataAsync(string path, byte[] data, int version = -1)
         {
             path = GetZooKeeperPath(path);
-
-            var nodeEntry = GetOrAddNodeEntry(path);
-            return await RetryUntilConnected(async () => await nodeEntry.SetDataAsync(data, version));
+            return await RetryUntilConnected(async () =>
+            {
+                var stat = await _zookeeperClient.setDataAsync(path, data, version);
+                return stat;
+            });
         }
 
         /// <summary>
@@ -249,36 +268,11 @@ namespace Apache.ShenYu.Client.Utils
         public async Task DeleteAsync(string path, int version = -1)
         {
             path = GetZooKeeperPath(path);
-            var nodeEntry = GetOrAddNodeEntry(path);
             await RetryUntilConnected(async () =>
             {
-                await nodeEntry.DeleteAsync(version);
+                await _zookeeperClient.deleteAsync(path, version);
                 return 0;
             });
-        }
-
-        /// <summary>
-        /// subscribe node data change
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="listener"></param>
-        public async Task SubscribeDataChangeAsync(string path, NodeDataChangeHandler listener)
-        {
-            path = GetZooKeeperPath(path);
-            var node = GetOrAddNodeEntry(path);
-            await node.SubscribeDataChangeAsync(listener);
-        }
-
-        /// <summary>
-        /// unsubscribe node data change
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="listener"></param>
-        public void UnSubscribeDataChange(string path, NodeDataChangeHandler listener)
-        {
-            path = GetZooKeeperPath(path);
-            var node = GetOrAddNodeEntry(path);
-            node.UnSubscribeDataChange(listener);
         }
 
         /// <summary>
@@ -299,30 +293,6 @@ namespace Apache.ShenYu.Client.Utils
             _connectionStateChangeHandler -= listener;
         }
 
-        /// <summary>
-        /// subscribe childnode change
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="listener"></param>
-        public async Task<IEnumerable<string>> SubscribeChildrenChange(string path, NodeChildrenChangeHandler listener)
-        {
-            path = GetZooKeeperPath(path);
-            var node = GetOrAddNodeEntry(path);
-            return await node.SubscribeChildrenChange(listener);
-        }
-
-        /// <summary>
-        /// Unsubscribe childnode change
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="listener"></param>
-        public void UnSubscribeChildrenChange(string path, NodeChildrenChangeHandler listener)
-        {
-            path = GetZooKeeperPath(path);
-            var node = GetOrAddNodeEntry(path);
-            node.UnSubscribeChildrenChange(listener);
-        }
-
         #endregion Public Method
 
         #region Overrides of Watcher
@@ -335,18 +305,7 @@ namespace Apache.ShenYu.Client.Utils
             if (_isDispose)
                 return;
 
-            var path = watchedEvent.getPath();
-            if (path == null)
-            {
-                await OnConnectionStateChange(watchedEvent);
-            }
-            else
-            {
-                NodeEntry nodeEntry;
-                if (!_nodeEntries.TryGetValue(path, out nodeEntry))
-                    return;
-                await nodeEntry.OnChange(watchedEvent, false);
-            }
+            await OnConnectionStateChange(watchedEvent);
         }
 
         #endregion Overrides of Watcher
@@ -362,7 +321,7 @@ namespace Apache.ShenYu.Client.Utils
 
             lock (_zkEventLock)
             {
-                TaskEx.Run(async () => { await ZooKeeper.closeAsync().ConfigureAwait(false); }).ConfigureAwait(false)
+                TaskEx.Run(async () => { await _zookeeperClient.closeAsync().ConfigureAwait(false); }).ConfigureAwait(false)
                     .GetAwaiter().GetResult();
             }
         }
@@ -370,8 +329,6 @@ namespace Apache.ShenYu.Client.Utils
         #endregion Implementation of IDisposable
 
         #region Private Method
-
-        private bool _isFirstConnectioned = true;
 
         private async Task OnConnectionStateChange(WatchedEvent watchedEvent)
         {
@@ -385,20 +342,6 @@ namespace Apache.ShenYu.Client.Utils
             {
                 await ReConnect();
             }
-            else if (state == Event.KeeperState.SyncConnected)
-            {
-                if (_isFirstConnectioned)
-                {
-                    _isFirstConnectioned = false;
-                }
-                else
-                {
-                    foreach (var nodeEntry in _nodeEntries)
-                    {
-                        await nodeEntry.Value.OnChange(watchedEvent, true);
-                    }
-                }
-            }
 
             _stateChangedCondition.Set();
             if (_connectionStateChangeHandler == null)
@@ -409,30 +352,25 @@ namespace Apache.ShenYu.Client.Utils
             });
         }
 
-        private NodeEntry GetOrAddNodeEntry(string path)
-        {
-            return _nodeEntries.GetOrAdd(path, k => new NodeEntry(path, this));
-        }
-
         private ZooKeeper CreateZooKeeper()
         {
             //log write to file switch
-            ZooKeeper.LogToFile = Options.LogToFile;
-            return new ZooKeeper(Options.ConnectionString, (int)Options.SessionSpanTimeout.TotalMilliseconds, this,
-                Options.SessionId, Options.SessionPasswdBytes, Options.ReadOnly);
+            ZooKeeper.LogToFile = _options.LogToFile;
+            return new ZooKeeper(_options.ConnectionString, (int)_options.SessionSpanTimeout.TotalMilliseconds, this,
+                _options.SessionId, _options.SessionPasswdBytes, _options.ReadOnly);
         }
 
         private async Task ReConnect()
         {
-            if (!Monitor.TryEnter(_zkEventLock, Options.ConnectionTimeout))
+            if (!Monitor.TryEnter(_zkEventLock, _options.ConnectionTimeout))
                 return;
             try
             {
-                if (ZooKeeper != null)
+                if (_zookeeperClient != null)
                 {
                     try
                     {
-                        await ZooKeeper.closeAsync();
+                        await _zookeeperClient.closeAsync();
                     }
                     catch
                     {
@@ -440,7 +378,7 @@ namespace Apache.ShenYu.Client.Utils
                     }
                 }
 
-                ZooKeeper = CreateZooKeeper();
+                _zookeeperClient = CreateZooKeeper();
             }
             finally
             {
@@ -458,7 +396,7 @@ namespace Apache.ShenYu.Client.Utils
 
         private string GetZooKeeperPath(string path)
         {
-            var basePath = Options.BaseRoutePath ?? "/";
+            var basePath = _options.BaseRoutePath ?? "/";
 
             if (!basePath.StartsWith("/"))
                 basePath = basePath.Insert(0, "/");
@@ -470,6 +408,14 @@ namespace Apache.ShenYu.Client.Utils
 
             path = $"{basePath}{path.TrimEnd('/')}";
             return string.IsNullOrEmpty(path) ? "/" : path;
+        }
+
+        /// <summary>
+        /// wait util zk connect success，timeout is in options
+        /// </summary>
+        private void WaitForRetry()
+        {
+            WaitForKeeperState(Watcher.Event.KeeperState.SyncConnected, _options.OperatingSpanTimeout);
         }
 
         #endregion Private Method

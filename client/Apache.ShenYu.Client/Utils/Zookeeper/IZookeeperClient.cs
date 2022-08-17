@@ -29,16 +29,6 @@ namespace Apache.ShenYu.Client.Utils
     public interface IZookeeperClient : IDisposable
     {
         /// <summary>
-        /// ZooKeeperConnect object
-        /// </summary>
-        ZooKeeper ZooKeeper { get; }
-
-        /// <summary>
-        /// Options
-        /// </summary>
-        ZkOptions Options { get; }
-
-        /// <summary>
         /// wait zk connect to give states
         /// </summary>
         /// <param name="states"></param>
@@ -62,13 +52,6 @@ namespace Apache.ShenYu.Client.Utils
         Task<IEnumerable<byte>> GetDataAsync(string path);
 
         /// <summary>
-        /// get childnodes
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns>childnodesList</returns>
-        Task<IEnumerable<string>> GetChildrenAsync(string path);
-
-        /// <summary>
         /// node exists
         /// </summary>
         /// <param name="path"></param>
@@ -84,12 +67,12 @@ namespace Apache.ShenYu.Client.Utils
         /// <param name="createMode"></param>
         /// <returns></returns>
         /// <remarks>
-        /// 
+        ///
         /// </remarks>
         Task<string> CreateAsync(string path, byte[] data, List<ACL> acls, CreateMode createMode);
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="path"></param>
         /// <param name="data"></param>
@@ -115,20 +98,6 @@ namespace Apache.ShenYu.Client.Utils
         Task DeleteAsync(string path, int version = -1);
 
         /// <summary>
-        /// subscribe node data change
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="listener"></param>
-        Task SubscribeDataChangeAsync(string path, NodeDataChangeHandler listener);
-
-        /// <summary>
-        /// unsubscribe node data change
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="listener"></param>
-        void UnSubscribeDataChange(string path, NodeDataChangeHandler listener);
-
-        /// <summary>
         /// subscribe connect stat change
         /// </summary>
         /// <param name="listener"></param>
@@ -139,19 +108,5 @@ namespace Apache.ShenYu.Client.Utils
         /// </summary>
         /// <param name="listener"></param>
         void UnSubscribeStatusChange(ConnectionStateChangeHandler listener);
-
-        /// <summary>
-        /// subscribe childnode change
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="listener"></param>
-        Task<IEnumerable<string>> SubscribeChildrenChange(string path, NodeChildrenChangeHandler listener);
-
-        /// <summary>
-        /// Unsubscribe childnode change
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="listener"></param>
-        void UnSubscribeChildrenChange(string path, NodeChildrenChangeHandler listener);
     }
 }

@@ -30,10 +30,6 @@ namespace Apache.ShenYu.Client.Utils
             ConnectionSpanTimeout = TimeSpan.FromMilliseconds(60000);
             SessionSpanTimeout = TimeSpan.FromMilliseconds(60000);
             OperatingSpanTimeout = TimeSpan.FromMilliseconds(60000);
-            ReadOnly = false;
-            SessionId = 0;
-            SessionPasswd = null;
-            EnableEphemeralNodeRestore = true;
         }
 
         /// <summary>
@@ -47,10 +43,6 @@ namespace Apache.ShenYu.Client.Utils
             ConnectionSpanTimeout = TimeSpan.FromMilliseconds(connectionTimeout);
             SessionSpanTimeout = TimeSpan.FromMilliseconds(sessionTimeout);
             OperatingSpanTimeout = TimeSpan.FromMilliseconds(operatingTimeout);
-            ReadOnly = false;
-            SessionId = 0;
-            SessionPasswd = null;
-            EnableEphemeralNodeRestore = true;
         }
 
         /// <summary>
@@ -85,61 +77,20 @@ namespace Apache.ShenYu.Client.Utils
             ConnectionString = connectionString;
         }
 
-        /// <summary>
-        /// create ZooKeeper client
-        /// </summary>
-        /// <param name="connectionString"></param>
-        /// <param name="connectionTimeout"></param>
-        /// <param name="operatingTimeout"></param>
-        /// <param name="retryCount"></param>
-        /// <param name="sessionTimeout"></param>
-        /// <param name="readOnly"></param>
-        /// <param name="sessionId"></param>
-        /// <param name="sessionPasswd"></param>
-        /// <param name="baseRoutePath"></param>
-        /// <param name="enableEphemeralNodeRestore"></param>
-        /// <param name="logToFile"></param>
-        public ZkOptions(string connectionString
-            , int connectionTimeout
-            , int operatingTimeout
-            , int retryCount
-            , int sessionTimeout
-            , bool readOnly
-            , long sessionId
-            , string sessionPasswd
-            , string baseRoutePath
-            , bool enableEphemeralNodeRestore
-            , bool logToFile) : this(connectionString, connectionTimeout, operatingTimeout, sessionTimeout)
-        {
-            ConnectionTimeout = connectionTimeout;
-            OperatingTimeout = operatingTimeout;
-            RetryCount = retryCount;
-            SessionTimeout = sessionTimeout;
-            ReadOnly = readOnly;
-            SessionId = sessionId;
-            SessionPasswd = sessionPasswd;
-            BaseRoutePath = baseRoutePath;
-            EnableEphemeralNodeRestore = enableEphemeralNodeRestore;
-            LogToFile = logToFile;
-        }
-
         public ZkOptions SetConnectionTimeout(int connectionTimeout)
         {
-            this.ConnectionTimeout = connectionTimeout;
             this.ConnectionSpanTimeout = TimeSpan.FromMilliseconds(connectionTimeout);
             return this;
         }
 
         public ZkOptions SetSessionTimeout(int sessionTimeout)
         {
-            this.SessionTimeout = sessionTimeout;
             this.SessionSpanTimeout = TimeSpan.FromMilliseconds(sessionTimeout);
             return this;
         }
 
         public ZkOptions SetOperatingTimeout(int operatingTimeout)
         {
-            this.OperatingTimeout = operatingTimeout;
             this.OperatingSpanTimeout = TimeSpan.FromMilliseconds(operatingTimeout);
             return this;
         }
@@ -156,32 +107,15 @@ namespace Apache.ShenYu.Client.Utils
             return this;
         }
 
-
-
         /// <summary>
         /// connect string
         /// </summary>
         public string ConnectionString { get; set; }
 
         /// <summary>
-        /// wait zooKeeper connect time
-        /// </summary>
-        public int ConnectionTimeout { get; set; } = 60 * 1000;
-
-        /// <summary>
-        /// execute zooKeeper handler retry waittime
-        /// </summary>
-        public int OperatingTimeout { get; set; } = 60 * 1000;
-
-        /// <summary>
         /// retry count
         /// </summary>
         public int RetryCount { get; set; } = 3;
-
-        /// <summary>
-        /// zookeeper session timeout
-        /// </summary>
-        public int SessionTimeout { get; set; } = 60 * 1000;
 
         /// <summary>
         /// readonly
@@ -219,11 +153,6 @@ namespace Apache.ShenYu.Client.Utils
         /// base root path
         /// </summary>
         public string BaseRoutePath { get; set; }
-
-        /// <summary>
-        /// enable effect shortnode recover
-        /// </summary>
-        public bool EnableEphemeralNodeRestore { get; set; }
 
         #region Internal
 

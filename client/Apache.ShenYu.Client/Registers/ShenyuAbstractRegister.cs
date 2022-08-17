@@ -43,15 +43,6 @@ namespace Apache.ShenYu.Client.Registers
             return nodeName.StartsWith(Constants.PathSeparator) ? nodeName.Substring(1) : nodeName;
         }
 
-        protected string BuildContextNodePath(string contextPath, string appName)
-        {
-            return string.IsNullOrEmpty(contextPath)
-                ? appName
-                : (contextPath.StartsWith("/")
-                    ? contextPath.Substring(1)
-                    : contextPath);
-        }
-
         protected string BuildURINodeName(URIRegisterDTO registerDTO)
         {
             string host = registerDTO.host;

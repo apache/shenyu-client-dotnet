@@ -87,71 +87,137 @@ namespace Apache.ShenYu.Client.Utils
             }
         }
 
+        /// <summary>
+        ///  dispose client
+        /// </summary>
         public void Close()
         {
             this._client.Dispose();
         }
 
+        /// <summary>
+        /// get data
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public RangeResponse Get(RangeRequest request)
         {
             var response = _client.Get(request, _metadata);
             return response;
         }
 
+        /// <summary>
+        /// get data
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public string GetVal(string key)
         {
             return _client.GetVal(key, _metadata);
         }
 
+        /// <summary>
+        /// get data async
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public async Task<string> GetValAsync(string key)
         {
             return await _client.GetValAsync(key, _metadata);
         }
 
+        /// <summary>
+        /// get rangevalues
+        /// </summary>
+        /// <param name="prefixKey"></param>
+        /// <returns></returns>
         public IDictionary<string, string> GetRangeVals(string prefixKey)
         {
             return _client.GetRangeVal(prefixKey, _metadata);
         }
 
+        /// <summary>
+        /// get rangevalues async
+        /// </summary>
+        /// <param name="prefixKey"></param>
+        /// <returns></returns>
         public async Task<IDictionary<string, string>> GetRangeValsAsync(string prefixKey)
         {
             return await _client.GetRangeValAsync(prefixKey, _metadata);
         }
 
+        /// <summary>
+        /// delete key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public long Delete(string key)
         {
             var response = _client.Delete(key, _metadata);
             return response.Deleted;
         }
 
+        /// <summary>
+        /// delete key async
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public async Task<long> DeleteAsync(string key)
         {
             var response = await _client.DeleteAsync(key, _metadata);
             return response.Deleted;
         }
 
+        /// <summary>
+        /// delete rangeKeys
+        /// </summary>
+        /// <param name="perfixKey"></param>
+        /// <returns></returns>
         public long DeleteRange(string perfixKey)
         {
             var response = _client.DeleteRange(perfixKey, _metadata);
             return response.Deleted;
         }
 
+        /// <summary>
+        /// delete rangeKeys async
+        /// </summary>
+        /// <param name="perfixKey"></param>
+        /// <returns></returns>
         public async Task<long> DeleteRangeAsync(string perfixKey)
         {
             var response = await _client.DeleteRangeAsync(perfixKey, _metadata);
             return response.Deleted;
         }
 
+        /// <summary>
+        /// put key-val
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public Etcdserverpb.PutResponse Put(string key, string value)
         {
             return _client.Put(key, value, _metadata);
         }
 
+        /// <summary>
+        /// putasync key-val
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public async Task<Etcdserverpb.PutResponse> PutAsync(string key, string value)
         {
             return await _client.PutAsync(key, value, _metadata);
         }
 
+        /// <summary>
+        /// put ke-val with leaseId
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public PutResponse PutEphemeral(string key, string value)
         {
             try
@@ -172,6 +238,12 @@ namespace Apache.ShenYu.Client.Utils
             return null;
         }
 
+        /// <summary>
+        /// putasync ke-val with leaseId
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public async Task<PutResponse> PutEphemeralAsync(string key, string value)
         {
             try
@@ -190,11 +262,6 @@ namespace Apache.ShenYu.Client.Utils
                 _logger.LogError("putEphemeral(key:{},value:{}) error.", key, value, ex);
             }
             return null;
-        }
-
-        public void Dispose()
-        {
-            _client.Dispose();
         }
     }
 }

@@ -37,6 +37,9 @@ namespace Apache.ShenYu.Client.Utils
         /// </summary>
         public string Password { get; set; }
 
+        /// <summary>
+        /// Etcd timeout
+        /// </summary>
         public long Timeout { get; set; }
 
         /// <summary>

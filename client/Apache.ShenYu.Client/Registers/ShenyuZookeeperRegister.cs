@@ -16,7 +16,6 @@
  */
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,9 +35,6 @@ namespace Apache.ShenYu.Client.Registers
         private ZookeeperClient _zkClient;
         private Dictionary<string, string> _nodeDataMap = new Dictionary<string, string>();
 
-        //private HashSet<string> _metadataSet = new HashSet<string>();
-        private ConcurrentDictionary<string, RegistryCenterHealthCheckModel> m_healthCheck = new ConcurrentDictionary<string, RegistryCenterHealthCheckModel>();
-
         public ShenyuZookeeperRegister(ILogger<ShenyuZookeeperRegister> logger)
         {
             _logger = logger;
@@ -46,6 +42,10 @@ namespace Apache.ShenYu.Client.Registers
 
         public override Task Init(ShenyuOptions shenyuOptions)
         {
+            if (string.IsNullOrEmpty(shenyuOptions.Register.ServerList))
+            {
+                throw new System.ArgumentException("serverList can not be null.");
+            }
             var serverList = shenyuOptions.Register.ServerList;
             this._shenyuOptions = shenyuOptions;
             //props
@@ -70,47 +70,36 @@ namespace Apache.ShenYu.Client.Registers
             this._zkClient = new ZookeeperClient(zkConfig);
             this._zkClient.SubscribeStatusChange(async (client, connectionStateChangeArgs) =>
             {
-                var healthCheckModel = m_healthCheck.GetOrAdd(zkConfig.ConnectionString, new RegistryCenterHealthCheckModel(true, 0));
                 switch (connectionStateChangeArgs.State)
                 {
                     case Watcher.Event.KeeperState.Disconnected:
                     case Watcher.Event.KeeperState.Expired:
                         if (client.WaitForKeeperState(Watcher.Event.KeeperState.SyncConnected,
-                            zkConfig.OperatingSpanTimeout))
+                            zkConfig.ConnectionSpanTimeout))
                         {
-                            if (healthCheckModel.HealthType == HealthTypeEnum.Disconnected)
+                            foreach (var node in _nodeDataMap)
                             {
-                                _logger.LogError("zookeeper server disconnected");
+                                var existStat = await _zkClient.ExistsAsync(node.Key);
+                                if (existStat)
+                                {
+                                    await _zkClient.CreateWithParentAsync(node.Key,
+                                        Encoding.UTF8.GetBytes(node.Value),
+                                        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                                    _logger.LogInformation("zookeeper client register success: {}", node.Value);
+                                }
                             }
-                            healthCheckModel.SetHealth();
                         }
                         else
                         {
-                            healthCheckModel.SetUnHealth(HealthTypeEnum.Disconnected,
-                                "Connection session disconnected");
+                            _logger.LogError("zookeeper server disconnected and retry connect fail");
                         }
-
                         break;
 
                     case Watcher.Event.KeeperState.AuthFailed:
-                        healthCheckModel.SetUnHealth(HealthTypeEnum.AuthFailed, "AuthFailed");
                         _logger.LogError("zookeeper server AuthFailed");
                         break;
-
                     case Watcher.Event.KeeperState.SyncConnected:
                     case Watcher.Event.KeeperState.ConnectedReadOnly:
-                        healthCheckModel.SetHealth();
-                        foreach (var node in _nodeDataMap)
-                        {
-                            var existStat = await _zkClient.ExistsAsync(node.Key);
-                            if (existStat)
-                            {
-                                await _zkClient.CreateWithParentAsync(node.Key,
-                                    Encoding.UTF8.GetBytes(node.Value),
-                                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-                                _logger.LogInformation("zookeeper client register success: {}", node.Value);
-                            }
-                        }
                         break;
                 }
                 await Task.CompletedTask;
@@ -152,11 +141,7 @@ namespace Apache.ShenYu.Client.Registers
             string realNode = RegisterPathConstants.BuildRealNode(metaDataPath, metadataNodeName);
             //create parent node
             await _zkClient.CreateWithParentAsync(metaDataPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            //// avoid dup registration for metadata
-            //lock (this._metadataSet)
-            //{
-            //    this._metadataSet.Add(realNode);
-            //}
+
             var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None, new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore
