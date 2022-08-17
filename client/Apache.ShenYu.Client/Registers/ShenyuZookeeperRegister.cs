@@ -18,7 +18,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Apache.ShenYu.Client.Models.DTO;
 using Apache.ShenYu.Client.Options;
@@ -32,10 +31,8 @@ namespace Apache.ShenYu.Client.Registers
     public class ShenyuZookeeperRegister : ShenyuAbstractRegister
     {
         private readonly ILogger<ShenyuZookeeperRegister> _logger;
-        private string _serverList;
         private ShenyuOptions _shenyuOptions;
-        private int _sessionTimeout;
-        private ZooKeeper _zkClient;
+        private ZookeeperClient _zkClient;
         private Dictionary<string, string> _nodeDataMap = new Dictionary<string, string>();
 
         public ShenyuZookeeperRegister(ILogger<ShenyuZookeeperRegister> logger)
@@ -45,125 +42,118 @@ namespace Apache.ShenYu.Client.Registers
 
         public override Task Init(ShenyuOptions shenyuOptions)
         {
+            if (string.IsNullOrEmpty(shenyuOptions.Register.ServerList))
+            {
+                throw new System.ArgumentException("serverList can not be null.");
+            }
+            var serverList = shenyuOptions.Register.ServerList;
             this._shenyuOptions = shenyuOptions;
-            this._serverList = shenyuOptions.Register.ServerList;
-            this._sessionTimeout =
-                Convert.ToInt32(
-                    this._shenyuOptions.Register.Props.GetValueOrDefault(Constants.RegisterConstants.SessionTimeout,
-                        "3000"));
-            this._zkClient = CreateClient(this._serverList, this._sessionTimeout, new StatWatcher(this));
+            //props
+            var props = shenyuOptions.Register.Props;
+            int sessionTimeout = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.SessionTimeout, "3000"));
+            int connectionTimeout = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.ConnectionTimeout, "3000"));
+            int baseSleepTime = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.BaseSleepTime, "1000"));
+            int maxRetries = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.MaxRetry, "3"));
+            int maxSleepTime = Convert.ToInt32(props.GetValueOrDefault(Constants.RegisterConstants.MaxSleepTime, int.MaxValue.ToString()));
+            ZkOptions zkConfig = new ZkOptions(serverList);
+            zkConfig.SetMaxRetry(maxRetries)
+                    .SetOperatingTimeout(baseSleepTime)
+                    .SetSessionTimeout(sessionTimeout)
+                    .SetConnectionTimeout(connectionTimeout);
+
+            props.TryGetValue(Constants.RegisterConstants.Password, out string password);
+            if (!string.IsNullOrEmpty(password))
+            {
+                zkConfig.SetSessionPassword(password);
+            }
+
+            this._zkClient = new ZookeeperClient(zkConfig);
+            this._zkClient.SubscribeStatusChange(async (client, connectionStateChangeArgs) =>
+            {
+                switch (connectionStateChangeArgs.State)
+                {
+                    case Watcher.Event.KeeperState.Disconnected:
+                    case Watcher.Event.KeeperState.Expired:
+                        if (client.WaitForKeeperState(Watcher.Event.KeeperState.SyncConnected,
+                            zkConfig.ConnectionSpanTimeout))
+                        {
+                            foreach (var node in _nodeDataMap)
+                            {
+                                var existStat = await _zkClient.ExistsAsync(node.Key);
+                                if (existStat)
+                                {
+                                    await _zkClient.CreateWithParentAsync(node.Key,
+                                        Encoding.UTF8.GetBytes(node.Value),
+                                        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                                    _logger.LogInformation("zookeeper client register success: {}", node.Value);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogError("zookeeper server disconnected and retry connect fail");
+                        }
+                        break;
+
+                    case Watcher.Event.KeeperState.AuthFailed:
+                        _logger.LogError("zookeeper server AuthFailed");
+                        break;
+                    case Watcher.Event.KeeperState.SyncConnected:
+                    case Watcher.Event.KeeperState.ConnectedReadOnly:
+                        break;
+                }
+                await Task.CompletedTask;
+            });
             return Task.CompletedTask;
         }
 
         public override async Task PersistInterface(MetaDataRegisterDTO metadata)
         {
-            // build metadata path
-            string rpcType = metadata.rpcType;
-            string contextPath = BuildContextNodePath(metadata.contextPath, metadata.appName);
-
-            // create parent node
-            string parentPath = $"/shenyu/register/metadata/{metadata.rpcType}/{contextPath}";
-            await _zkClient.CreateWithParentAsync(parentPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-
-            // create or set metadata node
-            string nodeName = BuildMetadataNodeName(metadata);
-            string nodePath = $"{parentPath}/{nodeName}";
-
-            var existStat = await _zkClient.existsAsync(nodePath);
-            // create node
-            var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None, new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Ignore
-            });
-            if (existStat == null)
-            {
-                await _zkClient.createAsync(nodePath, Encoding.UTF8.GetBytes(metadataStr), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
-            }
-            else
-            {
-                // update node
-                await _zkClient.setDataAsync(nodePath, Encoding.UTF8.GetBytes(metadataStr));
-            }
+            string contextPath = ContextPathUtils.BuildRealNode(metadata.contextPath, metadata.appName);
+            await RegisterMetadataAsync(contextPath, metadata);
         }
 
         public override async Task PersistURI(URIRegisterDTO registerDTO)
         {
-            // build uri path
-            string contextPath = BuildContextNodePath(registerDTO.contextPath, registerDTO.appName);
-            string parentPath =
-                $"/shenyu/register/uri/{registerDTO.rpcType}/{contextPath}";
-            await _zkClient.CreateWithParentAsync(parentPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            string contextPath = ContextPathUtils.BuildRealNode(registerDTO.contextPath, registerDTO.appName);
+            await RegisterURIAsync(contextPath, registerDTO);
+        }
 
-            string nodePath = $"{parentPath}/{registerDTO.host}:{registerDTO.port}";
-
-            // create ephemeral node
-            var existStat = await _zkClient.existsAsync(nodePath, null);
-            if (existStat == null)
+        private async Task RegisterURIAsync(string contextPath, URIRegisterDTO registerDTO)
+        {
+            string uriNodeName = BuildURINodeName(registerDTO);
+            string uriPath = RegisterPathConstants.BuildURIParentPath(registerDTO.rpcType, contextPath);
+            string realNode = RegisterPathConstants.BuildRealNode(uriPath, uriNodeName);
+            await _zkClient.CreateWithParentAsync(uriPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            string nodeData = JsonConvert.SerializeObject(registerDTO, Formatting.None, new JsonSerializerSettings
             {
-                var uriRegString = JsonConvert.SerializeObject(registerDTO, Formatting.None, new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-                _nodeDataMap[nodePath] = uriRegString;
-                await _zkClient.createAsync(nodePath, Encoding.UTF8.GetBytes(uriRegString), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.EPHEMERAL);
-            }
+                NullValueHandling = NullValueHandling.Ignore
+            });
+            _nodeDataMap[realNode] = nodeData;
+            await _zkClient.CreateOrUpdateAsync(realNode, Encoding.UTF8.GetBytes(nodeData), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                      CreateMode.EPHEMERAL);
+        }
+
+        private async Task RegisterMetadataAsync(string contextPath, MetaDataRegisterDTO metadata)
+        {
+            string metadataNodeName = BuildMetadataNodeName(metadata);
+            string metaDataPath = RegisterPathConstants.BuildMetaDataParentPath(metadata.rpcType, contextPath);
+            string realNode = RegisterPathConstants.BuildRealNode(metaDataPath, metadataNodeName);
+            //create parent node
+            await _zkClient.CreateWithParentAsync(metaDataPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            });
+            await _zkClient.CreateOrUpdateAsync(realNode, Encoding.UTF8.GetBytes(metadataStr), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            _logger.LogInformation("{} zookeeper client register metadata success: {}", metadata.rpcType, metadata);
         }
 
         public override async Task Close()
         {
-            await this._zkClient.closeAsync();
-        }
-
-        private ZooKeeper CreateClient(string connString, int sessionTimeout, Watcher watcher, string chroot = null)
-        {
-            var zk = new ZooKeeper(connString, sessionTimeout, watcher);
-
-            // waiting for connection finished
-            Thread.Sleep(1000);
-            while (zk.getState() == ZooKeeper.States.CONNECTING)
-            {
-                Thread.Sleep(1000);
-            }
-
-            var state = zk.getState();
-            if (state != ZooKeeper.States.CONNECTED && state != ZooKeeper.States.CONNECTEDREADONLY)
-            {
-                throw new Exception($"failed to connect to zookeeper endpoint: {connString}");
-            }
-
-            return zk;
-        }
-
-        class StatWatcher : Watcher
-        {
-            private readonly ShenyuZookeeperRegister _register;
-
-            public StatWatcher(ShenyuZookeeperRegister register)
-            {
-                _register = register;
-            }
-
-            public override async Task process(WatchedEvent @event)
-            {
-                var state = @event.getState();
-
-                if (Event.KeeperState.SyncConnected.Equals(state))
-                {
-                    foreach (var node in this._register._nodeDataMap)
-                    {
-                        var existStat = await this._register._zkClient.existsAsync(node.Key);
-                        if (existStat != null)
-                        {
-                            await this._register._zkClient.CreateWithParentAsync(node.Key,
-                                Encoding.UTF8.GetBytes(node.Value),
-                                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-                            this._register._logger.LogInformation("zookeeper client register success: {}", node.Value);
-                        }
-                    }
-                }
-            }
+            this._zkClient.Dispose();
+            await Task.CompletedTask;
         }
     }
 }

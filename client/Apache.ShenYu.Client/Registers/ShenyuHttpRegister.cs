@@ -50,6 +50,10 @@ namespace Apache.ShenYu.Client.Registers
 
         public override async Task Init(ShenyuOptions shenyuOptions)
         {
+            if (string.IsNullOrEmpty(shenyuOptions.Register.ServerList))
+            {
+                throw new System.ArgumentException("serverList can not be null.");
+            }
             this._shenyuOptions = shenyuOptions;
             this._shenyuOptions.Register.Props.TryGetValue(Constants.RegisterConstants.UserName, out this._userName);
             this._shenyuOptions.Register.Props.TryGetValue(Constants.RegisterConstants.Password, out this._password);
