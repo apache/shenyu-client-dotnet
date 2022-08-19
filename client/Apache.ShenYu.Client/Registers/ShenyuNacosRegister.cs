@@ -16,6 +16,7 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -43,7 +44,7 @@ namespace Apache.ShenYu.Client.Registers
         private NacosNamingService _namingService;
         private NacosConfigService _configService;
         private ShenyuOptions _shenyuOptions;
-        private HashSet<string> metadataSet = new HashSet<string>();
+        private ConcurrentQueue<string> metadataSet = new ConcurrentQueue<string>();
 
         public ShenyuNacosRegister(ILoggerFactory loggerFactory, ILogger<ShenyuNacosRegister> logger)
         {
@@ -124,12 +125,8 @@ namespace Apache.ShenYu.Client.Registers
             var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None,
                               new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             string configName = RegisterPathConstants.BuildServiceConfigPath(metadata.rpcType, contextPath);
-            lock (this.metadataSet)
-            {
-                this.metadataSet.Add(metadataStr);
-            }
-
-            var set = JsonConvert.SerializeObject(this.metadataSet, Formatting.None,
+            this.metadataSet.Enqueue(metadataStr);
+            var set = JsonConvert.SerializeObject(this.metadataSet.ToList(), Formatting.None,
                      new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             try
             {

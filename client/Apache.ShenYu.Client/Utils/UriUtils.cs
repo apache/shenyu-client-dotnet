@@ -62,6 +62,16 @@ namespace Apache.ShenYu.Client.Utils
 		}
 
         /// <summary>
+        /// Remove ends string.
+        /// </summary>
+        /// <param name="name"> the name </param>
+        /// <returns> the string </returns>
+        public static string RemoveSuffix(string name)
+        {
+            return name.EndsWith(PRE_FIX, StringComparison.Ordinal) ? name.Substring(0,name.Length-1) : name;
+        }
+
+        /// <summary>
         /// Get the path of uri with parameters.
         /// </summary>
         /// <param name="uri"> the uri. </param>
