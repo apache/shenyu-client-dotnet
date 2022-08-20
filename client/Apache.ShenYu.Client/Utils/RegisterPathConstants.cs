@@ -69,6 +69,7 @@ namespace Apache.ShenYu.Client.Utils
         /// <returns> path string </returns>
         public static string BuildMetaDataParentPath(string rpcType,string contextPath)
         {
+            contextPath = UriUtils.RemovePrefix(contextPath);
             return String.Join(SEPARATOR, ROOT_PATH, "metadata", rpcType, contextPath);
         }
 
@@ -92,6 +93,7 @@ namespace Apache.ShenYu.Client.Utils
         /// <returns> the string </returns>
         public static string BuildURIParentPath(string rpcType,string contextPath)
         {
+            contextPath = UriUtils.RemovePrefix(contextPath);
             return String.Join(SEPARATOR, ROOT_PATH, "uri", rpcType, contextPath);
         }
 
@@ -113,6 +115,8 @@ namespace Apache.ShenYu.Client.Utils
         /// <returns> the string </returns>
         public static string BuildRealNode(string nodePath,string nodeName)
         {
+            nodePath = UriUtils.RemoveSuffix(nodePath);
+            nodeName = UriUtils.RemovePrefix(nodeName);
             return String.Join(SEPARATOR, nodePath, nodeName);
         }
 
@@ -136,6 +140,7 @@ namespace Apache.ShenYu.Client.Utils
         /// <returns> the string </returns>
         public static string BuildServiceConfigPath(string rpcType,string contextPath)
         {
+            contextPath = UriUtils.RemovePrefix(contextPath);
             string serviceConfigPathOrigin = String.Join(SEPARATOR, ROOT_PATH, "service", rpcType, contextPath)
                 .Replace("/", DOT_SEPARATOR)
                 .Replace("*", "");

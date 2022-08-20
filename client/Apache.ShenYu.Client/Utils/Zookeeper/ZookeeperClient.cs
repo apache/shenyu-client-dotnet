@@ -356,8 +356,25 @@ namespace Apache.ShenYu.Client.Utils
         {
             //log write to file switch
             ZooKeeper.LogToFile = _options.LogToFile;
-            return new ZooKeeper(_options.ConnectionString, (int)_options.SessionSpanTimeout.TotalMilliseconds, this,
+            var zkClient = new ZooKeeper(_options.ConnectionString, (int)_options.SessionSpanTimeout.TotalMilliseconds, this,
                 _options.SessionId, _options.SessionPasswdBytes, _options.ReadOnly);
+            var operationStartTime = DateTime.Now;
+            while (true)
+            {
+                if (zkClient.getState() == ZooKeeper.States.CONNECTING)
+                {
+                    Thread.Sleep(100);
+                }else if(zkClient.getState() == ZooKeeper.States.CONNECTED
+                    ||zkClient.getState() == ZooKeeper.States.CONNECTEDREADONLY)
+                {
+                    return zkClient;
+                }
+                if (DateTime.Now - operationStartTime > _options.OperatingSpanTimeout)
+                {
+                    throw new TimeoutException(
+                        $"connect cannot be retried because of retry timeout ({_options.OperatingSpanTimeout.TotalMilliseconds} milli seconds)");
+                }
+            }
         }
 
         private async Task ReConnect()
