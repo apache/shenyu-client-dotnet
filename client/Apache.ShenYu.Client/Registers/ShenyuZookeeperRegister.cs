@@ -78,7 +78,7 @@ namespace Apache.ShenYu.Client.Registers
                             foreach (var node in _nodeDataMap)
                             {
                                 var existStat = await _zkClient.ExistsAsync(node.Key);
-                                if (existStat)
+                                if (!existStat)
                                 {
                                     await _zkClient.CreateWithParentAsync(node.Key,
                                         Encoding.UTF8.GetBytes(node.Value),
@@ -122,7 +122,7 @@ namespace Apache.ShenYu.Client.Registers
             string uriNodeName = BuildURINodeName(registerDTO);
             string uriPath = RegisterPathConstants.BuildURIParentPath(registerDTO.rpcType, contextPath);
             string realNode = RegisterPathConstants.BuildRealNode(uriPath, uriNodeName);
-            await _zkClient.CreateWithParentAsync(uriPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await _zkClient.CreateWithParentAsync(uriPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             string nodeData = JsonConvert.SerializeObject(registerDTO, Formatting.None, new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore
