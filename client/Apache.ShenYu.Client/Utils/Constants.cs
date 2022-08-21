@@ -68,6 +68,7 @@ namespace Apache.ShenYu.Client.Utils
             public const string Name = "Name";
             public const string Port = "Port";
             public const string HostName = "HostName";
+            public const string Token = "Token";
             public const string Tags = "Tags";
             public const string EnableTagOverride = "EnableTagOverride";
             //nacos

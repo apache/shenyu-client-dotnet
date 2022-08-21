@@ -25,6 +25,7 @@ using Apache.ShenYu.Client.Utils;
 using Consul;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using static Apache.ShenYu.Client.Utils.Constants;
 
 namespace Apache.ShenYu.Client.Registers
 {
@@ -50,6 +51,7 @@ namespace Apache.ShenYu.Client.Registers
             this._shenyuOptions = shenyuOptions;
             ConsulClientConfiguration config = new ConsulClientConfiguration();
             config.Address = new Uri(this._shenyuOptions.Register.ServerList);
+            config.Token = shenyuOptions.Register.Props.GetValueOrDefault(RegisterConstants.Token, "");
             this._client = new ConsulClient(config);
             _service = GetAgentService();
             return Task.CompletedTask;
