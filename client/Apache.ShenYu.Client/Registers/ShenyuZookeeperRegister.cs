@@ -80,7 +80,13 @@ namespace Apache.ShenYu.Client.Registers
                                 var existStat = await _zkClient.ExistsAsync(node.Key);
                                 if (!existStat)
                                 {
-                                    await _zkClient.CreateWithParentAsync(node.Key,
+                                    var pathArr = node.Key.Trim('/').Split('/');
+                                    //create parent
+                                    if (pathArr.Length > 1) {
+                                        var parentPath = node.Key.TrimEnd('/').Substring(0, node.Key.TrimEnd('/').LastIndexOf("/"));
+                                        await _zkClient.CreateWithParentAsync(parentPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                                    }
+                                    await _zkClient.CreateOrUpdateAsync(node.Key,
                                         Encoding.UTF8.GetBytes(node.Value),
                                         ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
                                     _logger.LogInformation("zookeeper client register success: {}", node.Value);
