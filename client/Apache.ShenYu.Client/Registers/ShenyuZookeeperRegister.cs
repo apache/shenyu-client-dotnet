@@ -59,10 +59,10 @@ namespace Apache.ShenYu.Client.Registers
                     .SetSessionTimeout(sessionTimeout)
                     .SetConnectionTimeout(connectionTimeout);
 
-            props.TryGetValue(Constants.RegisterConstants.Password, out string password);
-            if (!string.IsNullOrEmpty(password))
+            props.TryGetValue(Constants.RegisterConstants.Digest, out string digest);
+            if (!string.IsNullOrEmpty(digest))
             {
-                zkConfig.SetSessionPassword(password);
+                zkConfig.SetDigest(digest);
             }
 
             this._zkClient = new ZookeeperClient(zkConfig);
@@ -122,7 +122,7 @@ namespace Apache.ShenYu.Client.Registers
             string uriNodeName = BuildURINodeName(registerDTO);
             string uriPath = RegisterPathConstants.BuildURIParentPath(registerDTO.rpcType, contextPath);
             string realNode = RegisterPathConstants.BuildRealNode(uriPath, uriNodeName);
-            await _zkClient.CreateWithParentAsync(uriPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            await _zkClient.CreateWithParentAsync(uriPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             string nodeData = JsonConvert.SerializeObject(registerDTO, Formatting.None, new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore

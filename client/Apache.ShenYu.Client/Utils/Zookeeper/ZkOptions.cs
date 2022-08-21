@@ -96,9 +96,9 @@ namespace Apache.ShenYu.Client.Utils
         }
 
 
-        public ZkOptions SetSessionPassword(string sessionPassword)
+        public ZkOptions SetDigest(string digest)
         {
-            this.SessionPasswd = sessionPassword;
+            this.Digest = digest;
             return this;
         }
 
@@ -113,26 +113,9 @@ namespace Apache.ShenYu.Client.Utils
         public bool ReadOnly { get; set; } = false;
 
         /// <summary>
-        /// session Id。
+        /// point user to access
         /// </summary>
-        public long SessionId { get; set; }
-
-        /// <summary>
-        /// session password
-        /// </summary>
-        public string SessionPasswd { get; set; }
-
-        public byte[] SessionPasswdBytes
-        {
-            get
-            {
-                if (!string.IsNullOrWhiteSpace(SessionPasswd))
-                {
-                    return Encoding.UTF8.GetBytes(SessionPasswd);
-                }
-                return null;
-            }
-        }
+        public string Digest { get; set; }
 
         /// <summary>
         /// log to file options

@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using org.apache.zookeeper;
@@ -356,8 +357,10 @@ namespace Apache.ShenYu.Client.Utils
         {
             //log write to file switch
             ZooKeeper.LogToFile = _options.LogToFile;
-            var zkClient = new ZooKeeper(_options.ConnectionString, (int)_options.SessionSpanTimeout.TotalMilliseconds, this,
-                _options.SessionId, _options.SessionPasswdBytes, _options.ReadOnly);
+            var zkClient = new ZooKeeper(_options.ConnectionString, (int)_options.SessionSpanTimeout.TotalMilliseconds, this, _options.ReadOnly);
+            if (!string.IsNullOrEmpty(_options.Digest)) {
+                zkClient.addAuthInfo("digest",Encoding.UTF8.GetBytes(_options.Digest));
+            }
             var operationStartTime = DateTime.Now;
             while (true)
             {

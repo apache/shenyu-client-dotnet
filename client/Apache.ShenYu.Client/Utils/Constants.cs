@@ -59,6 +59,7 @@ namespace Apache.ShenYu.Client.Utils
             public const string SessionTimeout = "SessionTimeout";
             public const string ConnectionTimeout = "ConnectionTimeout";
             public const string OperatingTimeout = "OperatingTimeout";
+            public const string Digest = "Digest";
             //etcd
             public const string EtcdTimeout = "EtcdTimeout";
             public const string EtcdTTL = "EtcdTTL";
