@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Apache.ShenYu.Client.Models.DTO;
 using Apache.ShenYu.Client.Options;
-using dotnet_etcd;
+using Apache.ShenYu.Client.Utils;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -27,55 +29,77 @@ namespace Apache.ShenYu.Client.Registers
     public class ShenyuEtcdRegister : ShenyuAbstractRegister
     {
         private readonly ILogger<ShenyuEtcdRegister> _logger;
+        private EtcdClientUtils _etcdClient;
         private ShenyuOptions _shenyuOptions;
-        private EtcdClient _client;
 
         public ShenyuEtcdRegister(ILogger<ShenyuEtcdRegister> logger)
         {
             this._logger = logger;
         }
 
-        public override Task Init(ShenyuOptions shenyuOptions)
+        public override async Task Init(ShenyuOptions shenyuOptions)
         {
+            if (string.IsNullOrEmpty(shenyuOptions.Register.ServerList))
+            {
+                throw new System.ArgumentException("serverList can not be null.");
+            }
             this._shenyuOptions = shenyuOptions;
-            this._client = new EtcdClient(shenyuOptions.Register.ServerList);
-
-            return Task.CompletedTask;
+            var props = shenyuOptions.Register.Props;
+            long timeout = Convert.ToInt64(props.GetValueOrDefault(Constants.RegisterConstants.EtcdTimeout, "3000"));
+            long ttl = Convert.ToInt64(props.GetValueOrDefault(Constants.RegisterConstants.EtcdTTL, "5"));
+            props.TryGetValue(Constants.RegisterConstants.UserName, out string userName);
+            props.TryGetValue(Constants.RegisterConstants.Password, out string password);
+            _etcdClient = new EtcdClientUtils(new EtcdOptions()
+            {
+                Address = shenyuOptions.Register.ServerList,
+                UserName = userName,
+                Password = password,
+                TTL = ttl,
+                Timeout = timeout,
+            });
+            await Task.CompletedTask;
         }
 
         public override async Task PersistInterface(MetaDataRegisterDTO metadata)
         {
-            // create key
-            string contextPath = BuildContextNodePath(metadata.contextPath, metadata.appName);
-            string parentPath = $"/shenyu/register/metadata/{metadata.rpcType}/{contextPath}";
-            // create or set metadata node
-            string nodeName = BuildMetadataNodeName(metadata);
-            string nodePath = $"{parentPath}/{nodeName}";
-
-            // create value
-            var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            await this._client.PutAsync(nodePath, metadataStr);
-            this._logger.LogInformation("succeeded to register metadata, key: {}, value: {}", nodePath, metadataStr);
+            string contextPath = ContextPathUtils.BuildRealNode(metadata.contextPath, metadata.appName);
+            await RegisterMetadataAsync(contextPath, metadata);
         }
 
         public override async Task PersistURI(URIRegisterDTO registerDTO)
         {
-            // build uri path
-            string contextPath = BuildContextNodePath(registerDTO.contextPath, registerDTO.appName);
-            string parentPath =
-                $"/shenyu/register/uri/{registerDTO.rpcType}/{contextPath}";
-            string nodePath = $"{parentPath}/{registerDTO.host}:{registerDTO.port}";
-            var uriRegString = JsonConvert.SerializeObject(registerDTO, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            await this._client.PutAsync(nodePath, uriRegString);
-            this._logger.LogInformation("succeeded to register uri, key: {}, value: {}", nodePath, uriRegString);
+            string contextPath = ContextPathUtils.BuildRealNode(registerDTO.contextPath, registerDTO.appName);
+            await RegisterURIAsync(contextPath, registerDTO);
         }
 
-        public override Task Close()
+        public override async Task Close()
         {
-            this._client.Dispose();
-            return Task.CompletedTask;
+            this._etcdClient.Close();
+            await Task.CompletedTask;
+        }
+
+        private async Task RegisterMetadataAsync(string contextPath, MetaDataRegisterDTO metadata)
+        {
+            String metadataNodeName = BuildMetadataNodeName(metadata);
+            String metaDataPath = RegisterPathConstants.BuildMetaDataParentPath(metadata.rpcType, contextPath);
+            String realNode = RegisterPathConstants.BuildRealNode(metaDataPath, metadataNodeName);
+            var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None,
+                               new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            await this._etcdClient.PutEphemeralAsync(realNode, metadataStr);
+            _logger.LogInformation("register metadata success: {}", realNode);
+        }
+
+        private async Task RegisterURIAsync(string contextPath, URIRegisterDTO registerDTO)
+        {
+            string uriNodeName = BuildURINodeName(registerDTO);
+            string uriPath = RegisterPathConstants.BuildURIParentPath(registerDTO.rpcType, contextPath);
+            string realNode = RegisterPathConstants.BuildRealNode(uriPath, uriNodeName);
+            string nodeData = JsonConvert.SerializeObject(registerDTO, Formatting.None, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            });
+            await this._etcdClient.PutEphemeralAsync(realNode, nodeData);
+            _logger.LogInformation("register uri data success: {}", realNode);
         }
     }
 }

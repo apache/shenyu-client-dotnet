@@ -27,10 +27,14 @@ namespace Apache.ShenYu.Client.Utils
 
         public const string MetaType = "metadata";
         public const string UriType = "uri";
+        public const string CONTEXT = "context";
+        public const string CONTEXT_PATH = "contextPath";
 
         public const string SelectorJoinRule = "-";
         public const string PathSeparator = "/";
         public const string DotSeparator = ".";
+        public const string COLONS = ":";
+        public const string DoubleSlash = "\\";
 
         public class RegisterType
         {
@@ -51,9 +55,25 @@ namespace Apache.ShenYu.Client.Utils
         {
             public const string UserName = "UserName";
             public const string Password = "Password";
-
+            //zookeeper
             public const string SessionTimeout = "SessionTimeout";
-            public const string ConnectionTimeout = "SessionTimeout";
+            public const string ConnectionTimeout = "ConnectionTimeout";
+            public const string OperatingTimeout = "OperatingTimeout";
+            public const string Digest = "Digest";
+            //etcd
+            public const string EtcdTimeout = "EtcdTimeout";
+            public const string EtcdTTL = "EtcdTTL";
+            //conusl
+            public const string Id = "Id";
+            public const string Name = "Name";
+            public const string Port = "Port";
+            public const string HostName = "HostName";
+            public const string Token = "Token";
+            public const string Tags = "Tags";
+            public const string EnableTagOverride = "EnableTagOverride";
+            //nacos
+            public const string AccessKey = "AccessKey";
+            public const string SecretKey = "SecretKey";
         }
     }
 }

@@ -32,7 +32,14 @@ public void ConfigureServices(IServiceCollection services)
             "ServerList": "localhost:2181",
             "Props": {
                 // 3000 ms by default
-                "SessionTimeout": 60000
+                "SessionTimeout": 60000,
+               //3000 ms by default
+                "ConnectionTimeout": 60000,
+                // 1000 ms by default
+                "OperatingTimeout": 1000,
+                // digest
+                "Digest": "",
+
             }
         },
         "Client": {

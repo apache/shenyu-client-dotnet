@@ -36,7 +36,11 @@ public void ConfigureServices(IServiceCollection services)
                 // your nacos password
                 "Password": "nacos",
                 // align with the namespace set in admin project
-                "Namespace": "ShenyuRegisterCenter"
+                "Namespace": "ShenyuRegisterCenter",
+                // when want to aliyun AccessKey ,can ignore
+                "AccessKey": "",
+                // when want to aliyun SecretKey,can ignore
+                "SecretKey": ""
             }
         },
         "Client": {

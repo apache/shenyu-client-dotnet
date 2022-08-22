@@ -15,15 +15,16 @@
  * limitations under the License.
  */
 
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using Apache.ShenYu.Client.Models.DTO;
 using Apache.ShenYu.Client.Options;
 using Apache.ShenYu.Client.Utils;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Nacos.V2;
 using Nacos.V2.Config;
 using Nacos.V2.Naming;
@@ -35,12 +36,15 @@ namespace Apache.ShenYu.Client.Registers
     public class ShenyuNacosRegister : ShenyuAbstractRegister
     {
         private readonly ILogger<ShenyuNacosRegister> _logger;
+        private static string _nacosNameSpace = "Namespace";
+        private static string  _uriMetadata = "uriMetadata";
+        private static string _nacosDefaultGroup = "DEFAULT_GROUP";
         private readonly ILoggerFactory _loggerFactory;
         private readonly IHttpClientFactory _httpClientFactory;
         private NacosNamingService _namingService;
         private NacosConfigService _configService;
         private ShenyuOptions _shenyuOptions;
-        private HashSet<string> metadataSet = new HashSet<string>();
+        private ConcurrentQueue<string> metadataSet = new ConcurrentQueue<string>();
 
         public ShenyuNacosRegister(ILoggerFactory loggerFactory, ILogger<ShenyuNacosRegister> logger)
         {
@@ -49,41 +53,52 @@ namespace Apache.ShenYu.Client.Registers
             this._httpClientFactory = new DefaultHttpClientFactory();
         }
 
-        public override Task Init(ShenyuOptions shenyuOptions)
+        public override async Task Init(ShenyuOptions shenyuOptions)
         {
+            if (string.IsNullOrEmpty(shenyuOptions.Register.ServerList))
+            {
+                throw new System.ArgumentException("serverList can not be null.");
+            }
             this._shenyuOptions = shenyuOptions;
             NacosSdkOptions options = new NacosSdkOptions();
-            options.Namespace = this._shenyuOptions.Register.Props["Namespace"];
-            options.UserName = this._shenyuOptions.Register.Props["UserName"];
-            options.Password = this._shenyuOptions.Register.Props["Password"];
-            options.ServerAddresses = new List<string>() { { this._shenyuOptions.Register.ServerList } };
+            //props
+            var props = shenyuOptions.Register.Props;
+            options.ServerAddresses = this._shenyuOptions.Register.ServerList?.Split(',').ToList();//cluster split with ,                                                                                                
+            props.TryGetValue(_nacosNameSpace, out string nacosNameSpace);
+            options.Namespace = nacosNameSpace;
+            options.UserName= props.GetValueOrDefault(Constants.RegisterConstants.UserName, "");
+            options.Password= props.GetValueOrDefault(Constants.RegisterConstants.Password,"");
+            options.AccessKey = props.GetValueOrDefault(Constants.RegisterConstants.AccessKey, "");
+            options.SecretKey = props.GetValueOrDefault(Constants.RegisterConstants.SecretKey, "");
             var op = Microsoft.Extensions.Options.Options.Create(options);
 
-            this._namingService =
-                new NacosNamingService(this._loggerFactory, op, this._httpClientFactory);
+            this._namingService = new NacosNamingService(this._loggerFactory, op, this._httpClientFactory);
             this._configService = new NacosConfigService(this._loggerFactory, op);
 
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
 
         public override async Task PersistInterface(MetaDataRegisterDTO metadata)
         {
-            var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            string configPath = $"shenyu.register.service.{metadata.rpcType}.{metadata.contextPath.Substring(1)}";
-            lock (this.metadataSet)
-            {
-                this.metadataSet.Add(metadataStr);
-            }
-
-            var set = JsonConvert.SerializeObject(this.metadataSet, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            await this._configService.PublishConfig(configPath, "DEFAULT_GROUP", set);
+            string contextPath = ContextPathUtils.BuildRealNode(metadata.contextPath, metadata.appName);
+            await RegisterConfigAsync(contextPath, metadata);
         }
 
         public override async Task PersistURI(URIRegisterDTO registerDTO)
         {
-            string serviceName = $"shenyu.register.service.{registerDTO.rpcType}";
+            string contextPath = ContextPathUtils.BuildRealNode(registerDTO.contextPath, registerDTO.appName);
+            await RegisterServiceAsync(contextPath,registerDTO);
+        }
+
+        public override async Task Close()
+        {
+            await this._configService.ShutDown();
+            await this._namingService.ShutDown();
+        }
+
+        private async Task RegisterServiceAsync(string contextPath,URIRegisterDTO registerDTO)
+        {
+            string serviceName = RegisterPathConstants.BuildServiceInstancePath(registerDTO.rpcType);
             var uriRegString = JsonConvert.SerializeObject(registerDTO, Formatting.None,
                 new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             Instance instance = new Instance();
@@ -91,15 +106,44 @@ namespace Apache.ShenYu.Client.Registers
             instance.Ip = registerDTO.host;
             instance.Port = registerDTO.port;
             instance.Metadata = new Dictionary<string, string>();
-            instance.Metadata.Add("contextPath", registerDTO.contextPath.Substring(1));
-            instance.Metadata.Add("uriMetadata", uriRegString);
-            await this._namingService.RegisterInstance(serviceName, instance);
+            instance.Metadata.Add(Constants.CONTEXT_PATH,contextPath);
+            instance.Metadata.Add(_uriMetadata, uriRegString);
+            try
+            {
+                await this._namingService.RegisterInstance(serviceName, instance)
+                                         .ConfigureAwait(false);
+            }catch(Exception ex)
+            {
+                _logger.LogError(ex, "nacos register serviceInatance fail,please check");
+                throw new Exception("nacos register serviceInstance fail,please check", ex);
+            }
+            _logger.LogInformation($"nacos register serviceInstance uri success:{serviceName}");
         }
 
-        public override async Task Close()
+        private async Task RegisterConfigAsync(string contextPath, MetaDataRegisterDTO metadata)
         {
-            await this._configService.ShutDown();
-            await this._namingService.ShutDown();
+            var metadataStr = JsonConvert.SerializeObject(metadata, Formatting.None,
+                              new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            string configName = RegisterPathConstants.BuildServiceConfigPath(metadata.rpcType, contextPath);
+            this.metadataSet.Enqueue(metadataStr);
+            var set = JsonConvert.SerializeObject(this.metadataSet.ToList(), Formatting.None,
+                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            try
+            {
+                var publishResult = await this._configService.PublishConfig(configName, _nacosDefaultGroup, set);
+                if (publishResult)
+                {
+                    _logger.LogInformation($"nacos register metadata success: {metadata.ruleName}");
+                }
+                else
+                {
+                    throw new Exception("nacos register metadata fail,please check");
+                }
+            }catch(Exception ex)
+            {
+                _logger.LogError(ex, "nacos register metadata fail,please check");
+                throw new Exception("nacos register metadata fail,please check", ex);
+            }
         }
     }
 }

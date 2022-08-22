@@ -75,10 +75,10 @@ namespace Apache.ShenYu.AspNetCore.Utils
                     break;
                 }
                 case Constants.RegisterType.Etcd:
-                {
-                    services.AddSingleton<IShenyuRegister, ShenyuEtcdRegister>();
-                    break;
-                }
+                    {
+                        services.AddSingleton<IShenyuRegister, ShenyuEtcdRegister>();
+                        break;
+                    }
                 default:
                     throw new Exception($"not supported type {shenyuOptions.Register.RegisterType}");
             }

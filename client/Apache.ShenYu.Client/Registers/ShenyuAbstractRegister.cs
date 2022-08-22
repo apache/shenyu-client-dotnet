@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Threading.Tasks;
 using Apache.ShenYu.Client.Models.DTO;
 using Apache.ShenYu.Client.Options;
@@ -36,24 +37,25 @@ namespace Apache.ShenYu.Client.Registers
             }
             else
             {
-                nodeName = string.Join(".", metadata.serviceName, metadata.methodName);
+                nodeName = RegisterPathConstants.BuildNodeName(metadata.serviceName, metadata.methodName);
             }
 
             return nodeName.StartsWith(Constants.PathSeparator) ? nodeName.Substring(1) : nodeName;
         }
 
-        protected string BuildContextNodePath(string contextPath, string appName)
+        protected string BuildURINodeName(URIRegisterDTO registerDTO)
         {
-            return string.IsNullOrEmpty(contextPath)
-                ? appName
-                : (contextPath.StartsWith("/")
-                    ? contextPath.Substring(1)
-                    : contextPath);
+            string host = registerDTO.host;
+            int port = registerDTO.port;
+            return String.Join(Constants.COLONS, host, port.ToString());
         }
 
         public abstract Task Init(ShenyuOptions shenyuOptions);
+
         public abstract Task PersistInterface(MetaDataRegisterDTO metadata);
+
         public abstract Task PersistURI(URIRegisterDTO registerDTO);
+
         public abstract Task Close();
     }
 }
