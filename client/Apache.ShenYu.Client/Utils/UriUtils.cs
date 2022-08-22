@@ -28,10 +28,10 @@ namespace Apache.ShenYu.Client.Utils
 		private const string PRE_FIX = "/";
 
         /// <summary>
-        /// create URI <seealso cref="URI"/>.
+        /// create URI
         /// </summary>
-        /// <param name="uri"> uri string eg:/fallback </param>
-        /// <returns> created <seealso cref="URI"/> from uri </returns>
+        /// <param name="uri"></param>
+        /// <returns></returns>
         public static Uri CreateUri(string uri)
         {
             if (!string.IsNullOrEmpty(uri))
