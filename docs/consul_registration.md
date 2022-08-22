@@ -35,7 +35,8 @@ public void ConfigureServices(IServiceCollection services)
                 "Name": "shenyuAdmin",
                 "Tags": "test1,test2",
                 "Port": 8500,
-                "EnableTagOverride": false
+                "EnableTagOverride": false,
+                "Token":""
             }
         },
         "Client": {

@@ -31,7 +31,7 @@ namespace AspNetCoreExample
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>().UseUrls("http://*:5005");
+                    webBuilder.UseStartup<Startup>();
                 });
     }
 }

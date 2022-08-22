@@ -37,8 +37,8 @@ public void ConfigureServices(IServiceCollection services)
                 "ConnectionTimeout": 60000,
                 // 1000 ms by default
                 "OperatingTimeout": 1000,
-                // pwd
-                "Password": "",
+                // digest
+                "Digest": "",
 
             }
         },
