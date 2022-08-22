@@ -52,5 +52,6 @@
     <PackageReference Include="ZooKeeperNetEx" Version="3.4.12.4" />
     <PackageReference Include="Consul" Version="1.6.10.7" />
     <PackageReference Include="nacos-sdk-csharp" Version="1.3.3" />
+    <PackageReference Include="dotnet-etcd" Version="4.2.0" />
   </ItemGroup>
 </Project>
