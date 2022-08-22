@@ -59,10 +59,10 @@ namespace Apache.ShenYu.Client.Registers
                     .SetSessionTimeout(sessionTimeout)
                     .SetConnectionTimeout(connectionTimeout);
 
-            props.TryGetValue(Constants.RegisterConstants.Password, out string password);
-            if (!string.IsNullOrEmpty(password))
+            props.TryGetValue(Constants.RegisterConstants.Digest, out string digest);
+            if (!string.IsNullOrEmpty(digest))
             {
-                zkConfig.SetSessionPassword(password);
+                zkConfig.SetDigest(digest);
             }
 
             this._zkClient = new ZookeeperClient(zkConfig);
@@ -78,9 +78,15 @@ namespace Apache.ShenYu.Client.Registers
                             foreach (var node in _nodeDataMap)
                             {
                                 var existStat = await _zkClient.ExistsAsync(node.Key);
-                                if (existStat)
+                                if (!existStat)
                                 {
-                                    await _zkClient.CreateWithParentAsync(node.Key,
+                                    var pathArr = node.Key.Trim('/').Split('/');
+                                    //create parent
+                                    if (pathArr.Length > 1) {
+                                        var parentPath = node.Key.TrimEnd('/').Substring(0, node.Key.TrimEnd('/').LastIndexOf("/"));
+                                        await _zkClient.CreateWithParentAsync(parentPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                                    }
+                                    await _zkClient.CreateOrUpdateAsync(node.Key,
                                         Encoding.UTF8.GetBytes(node.Value),
                                         ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
                                     _logger.LogInformation("zookeeper client register success: {}", node.Value);
