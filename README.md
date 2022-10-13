@@ -1,16 +1,16 @@
 # ShenYu .NET client
 
-[![build](https://github.com/apache/incubator-shenyu-client-dotnet/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/apache/incubator-shenyu-client-dotnet/actions)
-[![codecov.io](https://codecov.io/gh/apache/incubator-shenyu-client-dotnet/coverage.svg?branch=main)](https://app.codecov.io/gh/apache/incubator-shenyu-client-dotnet?branch=main)
+[![build](https://github.com/apache/shenyu-client-dotnet/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/apache/shenyu-client-dotnet/actions)
+[![codecov.io](https://codecov.io/gh/apache/shenyu-client-dotnet/coverage.svg?branch=main)](https://app.codecov.io/gh/apache/shenyu-client-dotnet?branch=main)
 
 ShenYu .NET client can help you register your ASP.NET Core applications into ShenYu, similar with Java client. It
 supports below registration type,
 
-- http registration
-- zookeeper registration
-- nacos registration
-- consul registration
-- etcd registration
+-   http registration
+-   zookeeper registration
+-   nacos registration
+-   consul registration
+-   etcd registration
 
 ## Getting Started
 
