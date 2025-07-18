@@ -39,7 +39,7 @@
     <ProjectReference Include="..\Apache.ShenYu.Client\Apache.ShenYu.Client.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
