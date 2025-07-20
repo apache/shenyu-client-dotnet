@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4.2.2
         with:
           submodules: true
 
@@ -41,9 +41,9 @@ jobs:
         uses: ./.github/actions/skip-ci
 
       - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v2.1.0
+        uses: actions/setup-dotnet@v4.3.1
         with:
-          dotnet-version: 6.0.201
+          dotnet-version: 9.0.302
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
