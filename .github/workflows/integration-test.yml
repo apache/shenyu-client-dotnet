@@ -55,9 +55,12 @@ jobs:
           cd ./examples/AspNetCoreExample/
           docker build -t dotnet-example .
 
-      - name: Start Docker Compose
+      - name: Run docker compose
         if: env.SKIP_CI != 'true'
-        run: docker-compose -f ./build/docker-compose-${{ matrix.case }}.yml up -d
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        with:
+          compose-file: ./build/docker-compose-${{ matrix.case }}.yml 
+          up-flags: -d
 
       # replace with check health step
       - name: Run tests
